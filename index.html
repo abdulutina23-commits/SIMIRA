@@ -1136,13 +1136,16 @@
                         <h3 class="font-display text-xl font-bold text-navy-900">Katalog Kegiatan PKB, Workshop & E-Sertifikat</h3>
                         <p class="text-xs text-slate-500">Pendaftaran 1-Klik bagi anggota terdaftar serta layanan unduh sertifikat pelatihan resmi PGRI Cabang Khusus Kemenag Gorut.</p>
                     </div>
-                    <div class="flex flex-col sm:flex-row gap-2.5 w-full lg:w-auto">
-                        <input type="text" id="certVerifyInput" placeholder="Masukkan NIP / NPA untuk E-Sertifikat..." class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-navy-900 sm:w-64">
-                        <button onclick="verifyAndDownloadCertificate()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <input type="text" id="certVerifyInput" placeholder="Masukkan NIP / NPA untuk E-Sertifikat..." class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-navy-900 sm:w-56">
+                        <button type="button" onclick="verifyAndDownloadCertificate()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2">
                             <i class="fa-solid fa-award"></i> Cek & Unduh Sertifikat
                         </button>
-                        <button onclick="printSubmenuReport('pkb')" class="px-4 py-2.5 rounded-xl bg-navy-900 hover:bg-navy-800 text-gold-300 font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2">
+                        <button type="button" onclick="printSubmenuReport('pkb')" class="px-4 py-2.5 rounded-xl bg-navy-900 hover:bg-navy-800 text-gold-300 font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2">
                             <i class="fa-solid fa-file-pdf"></i> Cetak PDF
+                        </button>
+                        <button type="button" onclick="openModalTambahPkb()" class="admin-only-el px-4 py-2.5 rounded-xl gold-gradient text-navy-950 font-bold text-xs sm:text-sm shadow transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Tambah Kegiatan PKB
                         </button>
                     </div>
                 </div>
@@ -1538,515 +1541,88 @@
     </nav>
 
     <!-- ======================================================================= -->
-    <!-- MODAL 1: GENERATOR KARTU TANDA ANGGOTA (KTA) DIGITAL                    -->
+    <!-- MODAL 11: TAMBAH / EDIT KEGIATAN PKB                                    -->
     <!-- ======================================================================= -->
-    <div id="ktaModal" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gold-500/40 space-y-5 animate-fadeIn">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div>
-                    <h4 class="font-display font-bold text-base text-navy-900">Kartu Tanda Anggota (KTA) Digital</h4>
-                    <p class="text-xs text-slate-500">PGRI Cabang Khusus Kementerian Agama Kab. Gorontalo Utara</p>
-                </div>
-                <button type="button" onclick="closeKtaModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <!-- KTA Card Visual Area -->
-            <div id="printableArea" class="navy-crystal rounded-2xl p-5 text-white shadow-xl border-2 border-gold-500 relative overflow-hidden">
-                <div class="absolute -right-10 -bottom-10 w-44 h-44 rounded-full bg-emerald-500/15 blur-xl"></div>
-                
-                <!-- Card Header -->
-                <div class="flex items-center justify-between border-b border-gold-500/30 pb-3 mb-4">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-10 h-10 rounded-xl gold-gradient flex items-center justify-center text-navy-950 font-black text-base shadow overflow-hidden p-0.5">
-                            <img class="app-logo-img w-full h-full object-contain bg-white rounded-lg hidden" alt="Logo SIMIRA">
-                            <i class="app-logo-icon fa-solid fa-building-columns"></i>
-                        </div>
-                        <div>
-                            <h5 class="font-display font-extrabold text-xs tracking-wider uppercase text-gold-300">Persatuan Guru Republik Indonesia</h5>
-                            <p class="text-[10px] text-emerald-300 font-semibold">CABANG KHUSUS KEMENAG KAB. GORONTALO UTARA</p>
-                        </div>
-                    </div>
-                    <span class="px-2 py-0.5 rounded bg-emerald-600 text-[10px] font-bold uppercase">Aktif</span>
-                </div>
-
-                <!-- Card Body -->
-                <div class="grid grid-cols-12 gap-4 items-center">
-                    <div class="col-span-8 space-y-1.5 text-xs">
-                        <div>
-                            <span class="text-[10px] text-slate-400 uppercase block">Nama Anggota</span>
-                            <p id="ktaNama" class="font-display font-bold text-sm sm:text-base text-white">-</p>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <span class="text-[10px] text-slate-400 uppercase block">NPA PGRI</span>
-                                <p id="ktaNpa" class="font-mono font-bold text-gold-300">-</p>
-                            </div>
-                            <div>
-                                <span class="text-[10px] text-slate-400 uppercase block">NIP / NUPTK</span>
-                                <p id="ktaNip" class="font-mono text-slate-200 text-[11px]">-</p>
-                            </div>
-                        </div>
-                        <div>
-                            <span class="text-[10px] text-slate-400 uppercase block">Satuan Kerja / Ranting</span>
-                            <p id="ktaSatker" class="font-semibold text-emerald-300">-</p>
-                        </div>
-                        <div>
-                            <span class="text-[10px] text-slate-400 uppercase block">Status & Jabatan Organisasi</span>
-                            <p id="ktaStatus" class="text-slate-200 text-[11px]">-</p>
-                        </div>
-                    </div>
-
-                    <!-- Simulated QR Code Verification -->
-                    <div class="col-span-4 flex flex-col items-center justify-center bg-white p-2.5 rounded-xl text-navy-900 shadow-inner">
-                        <svg id="ktaQrSvg" viewBox="0 0 100 100" class="w-20 h-20">
-                            <rect width="100" height="100" fill="#ffffff"/>
-                            <rect x="8" y="8" width="26" height="26" fill="none" stroke="#0A192F" stroke-width="6"/>
-                            <rect x="16" y="16" width="10" height="10" fill="#059669"/>
-                            <rect x="66" y="8" width="26" height="26" fill="none" stroke="#0A192F" stroke-width="6"/>
-                            <rect x="74" y="16" width="10" height="10" fill="#059669"/>
-                            <rect x="8" y="66" width="26" height="26" fill="none" stroke="#0A192F" stroke-width="6"/>
-                            <rect x="16" y="74" width="10" height="10" fill="#059669"/>
-                            <rect x="42" y="12" width="8" height="8" fill="#0A192F"/>
-                            <rect x="42" y="28" width="14" height="8" fill="#0A192F"/>
-                            <rect x="12" y="44" width="18" height="8" fill="#0A192F"/>
-                            <rect x="40" y="42" width="18" height="18" fill="#D4AF37"/>
-                            <rect x="66" y="44" width="22" height="8" fill="#0A192F"/>
-                            <rect x="44" y="68" width="10" height="22" fill="#0A192F"/>
-                            <rect x="64" y="66" width="12" height="12" fill="#059669"/>
-                            <rect x="80" y="78" width="12" height="12" fill="#0A192F"/>
-                        </svg>
-                        <span class="text-[9px] font-mono font-bold text-navy-900 mt-1">VERIFIED-GORUT</span>
-                    </div>
-                </div>
-
-                <!-- Card Footer -->
-                <div class="mt-4 pt-2.5 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-300">
-                    <div>
-                        <span class="block text-slate-400">Berlaku Selama Menjadi Anggota Aktif</span>
-                        <span id="ktaSignCityDate" class="text-[9px] text-emerald-300">Gorontalo Utara</span>
-                    </div>
-                    <div class="text-right">
-                        <span id="ktaSignTitle" class="text-gold-300 font-semibold block">Ketua Cabang Khusus Kemenag</span>
-                        <span id="ktaSignName" class="text-white font-bold block">-</span>
-                        <span id="ktaSignNip" class="text-[9px] text-slate-300 font-mono block">-</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex flex-wrap items-center justify-between gap-2">
-                <div id="ktaAdminActionButtons" class="admin-only-el flex items-center gap-1.5">
-                    <button type="button" onclick="promptEditMemberFromKta()" class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-navy-900 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-pen-to-square text-emerald-600"></i> Edit
-                    </button>
-                    <button type="button" id="btnDeleteFromKtaModal" onclick="promptDeleteMemberFromKta()" class="px-3.5 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-trash-can"></i> Hapus
-                    </button>
-                </div>
-                <div class="flex items-center gap-2 ml-auto">
-                    <button type="button" onclick="closeKtaModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">Tutup</button>
-                    <button type="button" onclick="printKtaCardNow()" class="px-5 py-2.5 rounded-xl gold-gradient text-navy-950 text-xs font-bold shadow flex items-center gap-2">
-                        <i class="fa-solid fa-print"></i> Cetak / Simpan PDF
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ======================================================================= -->
-    <!-- MODAL 6: KONFIRMASI HAPUS ANGGOTA TERDAFTAR                             -->
-    <!-- ======================================================================= -->
-    <div id="deleteMemberModal" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-rose-200 space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
-                        <i class="fa-solid fa-user-xmark"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-display font-bold text-base text-navy-900">Hapus Anggota Terdaftar</h4>
-                        <p class="text-[11px] text-slate-500">Penghapusan data anggota dari Direktori & KTA Digital</p>
-                    </div>
-                </div>
-                <button type="button" onclick="closeDeleteMemberModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <div class="p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200/80 text-xs space-y-1">
-                <p class="text-slate-500">Anggota yang akan dihapus:</p>
-                <p id="delMemberNameDisplay" class="font-display font-bold text-sm text-navy-900">-</p>
-                <p id="delMemberMetaDisplay" class="font-mono text-[11px] text-rose-700">-</p>
-            </div>
-
-            <form onsubmit="confirmDeleteMember(event)" class="space-y-3 text-xs sm:text-sm">
-                <input type="hidden" id="delMemberNpaHidden">
-                <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Alasan Penghapusan Keanggotaan</label>
-                    <select id="delMemberReasonSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-rose-600">
-                        <option value="Mutasi / Pindah Tugas Luar Daerah">Mutasi / Pindah Tugas Luar Daerah</option>
-                        <option value="Purna Tugas / Pensiun">Purna Tugas / Pensiun</option>
-                        <option value="Meninggal Dunia">Meninggal Dunia</option>
-                        <option value="Berhenti Atas Permintaan Sendiri">Berhenti Atas Permintaan Sendiri</option>
-                        <option value="Data Ganda / Koreksi Administrasi">Data Ganda / Koreksi Administrasi</option>
-                    </select>
-                </div>
-                <div class="pt-2 flex items-center justify-end gap-2">
-                    <button type="button" onclick="closeDeleteMemberModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">Batal</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow flex items-center gap-1.5">
-                        <i class="fa-solid fa-trash-can"></i> Ya, Hapus Anggota
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- ======================================================================= -->
-    <!-- MODAL 2: FORM TAMBAH / PEMUTAKHIRAN ANGGOTA                             -->
-    <!-- ======================================================================= -->
-    <div id="modalAnggota" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h4 id="modalAnggotaTitle" class="font-display font-bold text-base text-navy-900">Formulir Pendaftaran & Pemutakhiran Anggota</h4>
-                <button type="button" onclick="closeModalAnggota()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <form id="formTambahAnggota" onsubmit="saveNewMember(event)" class="space-y-3 text-xs sm:text-sm">
-                <input type="hidden" id="memberEditOriginalNpa" value="">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-semibold text-slate-700 mb-1">NPA PGRI</label>
-                        <input type="text" id="inpNpa" required placeholder="Contoh: 250501009" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-slate-700 mb-1">NIP / NI PPPK / NUPTK</label>
-                        <input type="text" id="inpNip" required placeholder="1985xxxx / NUPTK" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
-                    </div>
-                </div>
-                <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Nama Lengkap & Gelar</label>
-                    <input type="text" id="inpNama" required placeholder="Contoh: Siti Nurhaliza, S.Pd., M.Pd." class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Satuan Kerja Madrasah (Ketik Manual)</label>
-                        <input type="text" id="inpSatker" list="satkerSuggestionsList" required placeholder="Ketik nama madrasah/satker..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-navy-900">
-                        <datalist id="satkerSuggestionsList">
-                            <option value="MIN 1 Gorontalo Utara"></option>
-                            <option value="MTsN 1 Gorontalo Utara"></option>
-                            <option value="MAN 1 Gorontalo Utara"></option>
-                            <option value="MTs Al-Khairaat Kwandang"></option>
-                            <option value="MA Al-Khairaat Gentuma"></option>
-                            <option value="MI Muhammadiyah Tolinggula"></option>
-                            <option value="MIS Al-Hidayah Tolinggula"></option>
-                            <option value="MA Monano"></option>
-                            <option value="RA Perwanida Kwandang"></option>
-                            <option value="Pokjawas Kemenag Gorut"></option>
-                        </datalist>
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Jenjang Satker</label>
-                        <select id="inpJenjang" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white">
-                            <option value="MI">Madrasah Ibtidaiyah (MI)</option>
-                            <option value="MTs">Madrasah Tsanawiyah (MTs)</option>
-                            <option value="MA">Madrasah Aliyah (MA)</option>
-                            <option value="RA">Raudhatul Athfal (RA)</option>
-                            <option value="Pengawas">Pengawas Madrasah/PAI</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Status Kepegawaian</label>
-                        <select id="inpStatusPegawai" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white">
-                            <option value="PNS">PNS</option>
-                            <option value="PPPK">PPPK</option>
-                            <option value="Non-ASN Sertifikasi">Non-ASN Sertifikasi</option>
-                            <option value="Guru Honorer">Guru Honorer</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Status Iuran Bulan Ini</label>
-                        <select id="inpStatusIuran" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white">
-                            <option value="Lunas">Lunas</option>
-                            <option value="Menunggak">Menunggak</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Jabatan di PGRI / Profesi</label>
-                    <input type="text" id="inpJabatan" value="Anggota Aktif / Guru Madrasah" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
-                </div>
-
-                <div class="pt-3 flex justify-end gap-2">
-                    <button type="button" onclick="closeModalAnggota()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-semibold">Batal</button>
-                    <button type="submit" id="btnSubmitAnggotaForm" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow">Simpan ke Database</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- ======================================================================= -->
-    <!-- MODAL 3: FORM CATAT / EDIT TRANSAKSI IURAN & KAS                        -->
-    <!-- ======================================================================= -->
-    <div id="modalTransaksi" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h4 id="modalTransaksiTitle" class="font-display font-bold text-base text-navy-900">Catat Setoran Iuran / Kas Organisasi</h4>
-                <button type="button" onclick="closeModalTransaksi()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <form id="formTransaksi" onsubmit="saveNewTransaction(event)" class="space-y-3 text-xs sm:text-sm">
-                <input type="hidden" id="trxEditIndex" value="-1">
-                <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Nama Anggota / Ranting Satker</label>
-                    <input type="text" id="trxNama" required placeholder="Contoh: Kolektif Ranting MTsN 1 Gorut" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Periode Bulan</label>
-                        <input type="text" id="trxBulan" required value="Mei 2025" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Jenis Arus Kas</label>
-                        <select id="trxKategori" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white">
-                            <option value="Iuran Masuk">Iuran Masuk (+)</option>
-                            <option value="Dana keluar">Pengeluaran Kas (-)</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Nominal (Rp)</label>
-                    <input type="number" id="trxNominal" required placeholder="Contoh: 250000" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
-                </div>
-                <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeModalTransaksi()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold">Batal</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl navy-crystal text-gold-300 font-bold">Simpan Transaksi</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- ======================================================================= -->
-    <!-- MODAL 10: KONFIRMASI HAPUS TRANSAKSI SETORAN / KAS                      -->
-    <!-- ======================================================================= -->
-    <div id="deleteTransaksiModal" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-rose-200 space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-display font-bold text-base text-navy-900">Hapus Laporan Setoran / Kas</h4>
-                        <p class="text-[11px] text-slate-500">Data transaksi ini akan dihapus dari jurnal kas</p>
-                    </div>
-                </div>
-                <button type="button" onclick="closeDeleteTransaksiModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <div class="p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200/80 text-xs space-y-1">
-                <p id="delTrxIdDisplay" class="font-mono font-bold text-rose-700 uppercase">-</p>
-                <p id="delTrxNamaDisplay" class="font-display font-bold text-sm text-navy-900">-</p>
-                <p id="delTrxNominalDisplay" class="font-mono font-semibold text-xs text-slate-600">-</p>
-            </div>
-
-            <input type="hidden" id="delTrxIndexHidden" value="-1">
-            <div class="pt-1 flex items-center justify-end gap-2">
-                <button type="button" onclick="closeDeleteTransaksiModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">Batal</button>
-                <button type="button" onclick="confirmDeleteTransaction()" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow flex items-center gap-1.5">
-                    <i class="fa-solid fa-trash-can"></i> Ya, Hapus Setoran
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ======================================================================= -->
-    <!-- MODAL 4: KONFIGURASI URL GOOGLE APPS SCRIPT (BACKEND CLOUD)             -->
-    <!-- ======================================================================= -->
-    <div id="configModal" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="modalPkb" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div>
-                    <h4 class="font-display font-bold text-base text-navy-900">Integrasi Cloud Google Sheets (GAS API)</h4>
-                    <p class="text-xs text-slate-500">Hubungkan aplikasi HTML5 ini dengan Web App URL dari Google Apps Script Anda.</p>
-                </div>
-                <button type="button" onclick="closeConfigModal()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+                <h4 id="modalPkbTitle" class="font-display font-bold text-base text-navy-900">Tambah Kegiatan PKB Baru</h4>
+                <button type="button" onclick="closeModalPkb()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-
-            <div class="space-y-3 text-xs sm:text-sm">
-                <label class="block font-semibold text-slate-700">URL Web App Google Apps Script (`https://script.google.com/macros/s/.../exec`)</label>
-                <input type="url" id="gasUrlInput" placeholder="Tempelkan URL Web App hasil Deploy Code.gs di sini..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-navy-900">
-                <p class="text-[11px] text-slate-500 leading-relaxed">
-                    *Jika dikosongkan, aplikasi tetap berjalan 100% normal menggunakan penyimpanan lokal (<code class="text-navy-900 font-semibold">localStorage</code>). Jika diisi, setiap input anggota, iuran, dan aspirasi akan langsung dikirim ke Google Sheets.
-                </p>
-            </div>
-
-            <div class="flex items-center justify-between pt-3 border-t border-slate-100">
-                <div class="flex flex-wrap gap-1.5">
-                    <button type="button" onclick="syncFromCloud()" class="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold flex items-center gap-1.5">
-                        <i class="fa-solid fa-cloud-arrow-down"></i> Tarik dari Sheets
-                    </button>
-                    <button type="button" onclick="pushAllStateToCloud()" class="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold flex items-center gap-1.5">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> Kirim Semua ke Sheets
-                    </button>
-                </div>
-                <div class="flex gap-2">
-                    <button type="button" onclick="closeConfigModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-semibold text-slate-600">Tutup</button>
-                    <button type="button" onclick="saveGasUrlConfig()" class="px-5 py-2 rounded-xl navy-crystal text-gold-300 text-xs font-bold">Simpan Koneksi</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ======================================================================= -->
-    <!-- MODAL 5: TAMBAH / EDIT PENGURUS ORGANISASI                              -->
-    <!-- ======================================================================= -->
-    <div id="modalPengurus" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h4 id="modalPengurusTitle" class="font-display font-bold text-base text-navy-900">Tambah Struktur Pengurus Cabang Khusus</h4>
-                <button onclick="closeModalTambahPengurus()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <form id="formTambahPengurus" onsubmit="saveNewPengurus(event)" class="space-y-3 text-xs sm:text-sm">
-                <input type="hidden" id="pengEditIndex" value="-1">
+            <form id="formPkb" onsubmit="savePkbItem(event)" class="space-y-3 text-xs sm:text-sm">
+                <input type="hidden" id="pkbEditIndex" value="-1">
                 <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Jabatan Kepengurusan</label>
-                    <input type="text" id="pengJabatan" required placeholder="Contoh: Ketua Bidang PKB / Sekretaris" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                    <label class="block font-semibold text-slate-700 mb-1">Judul Kegiatan / Workshop</label>
+                    <input type="text" id="pkbJudul" required placeholder="Contoh: Workshop Implementasi Kurikulum Nasional" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-navy-900">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Tanggal Pelaksanaan</label>
+                        <input type="text" id="pkbTanggal" required placeholder="Contoh: 24 Mei 2025" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Beban JP / Durasi</label>
+                        <input type="text" id="pkbJp" required placeholder="Contoh: 32 JP" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200">
+                    </div>
                 </div>
                 <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Nama Lengkap & Gelar</label>
-                    <input type="text" id="pengNama" required placeholder="Contoh: Drs. H. Mahmud Yunus, M.Pd." class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                    <label class="block font-semibold text-slate-700 mb-1">Lokasi / Ruang Pertemuan</label>
+                    <input type="text" id="pkbLokasi" required placeholder="Contoh: Aula Kankemenag Kab. Gorut" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200">
                 </div>
-                <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Asal Satker / Instansi</label>
-                    <input type="text" id="pengSatker" required placeholder="Contoh: MAN 1 Gorontalo Utara" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
-                </div>
-                <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Kelompok Hirarki</label>
-                    <select id="pengLevel" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white">
-                        <option value="Dewan Pembina">Dewan Pembina / Penasihat</option>
-                        <option value="Pengurus Harian">Pengurus Harian Inti</option>
-                        <option value="Ketua Seksi / Bidang">Ketua Seksi / Bidang</option>
-                    </select>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Kuota Peserta</label>
+                        <input type="text" id="pkbKuota" required placeholder="Contoh: 150 Peserta" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Status Kegiatan</label>
+                        <select id="pkbStatus" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white">
+                            <option value="Pendaftaran Dibuka">Pendaftaran Dibuka</option>
+                            <option value="Sedang Berlangsung">Sedang Berlangsung</option>
+                            <option value="Selesai - Sertifikat Tersedia">Selesai - Sertifikat Tersedia</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeModalTambahPengurus()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold">Batal</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl gold-gradient text-navy-950 font-bold">Simpan Pengurus</button>
+                    <button type="button" onclick="closeModalPkb()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-semibold">Batal</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl navy-crystal text-gold-300 font-bold shadow">Simpan Kegiatan PKB</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- ======================================================================= -->
-    <!-- MODAL 7: KONFIRMASI HAPUS PENGURUS ORGANISASI                           -->
+    <!-- MODAL 12: KONFIRMASI HAPUS KEGIATAN PKB                                 -->
     <!-- ======================================================================= -->
-    <div id="deletePengurusModal" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="deletePkbModal" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-rose-200 space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div class="flex items-center gap-2.5">
                     <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
-                        <i class="fa-solid fa-user-minus"></i>
+                        <i class="fa-solid fa-graduation-cap"></i>
                     </div>
                     <div>
-                        <h4 class="font-display font-bold text-base text-navy-900">Hapus Pengurus Terdaftar</h4>
-                        <p class="text-[11px] text-slate-500">Hapus untuk digantikan atau disesuaikan dalam struktur</p>
+                        <h4 class="font-display font-bold text-base text-navy-900">Hapus Kegiatan PKB</h4>
+                        <p class="text-[11px] text-slate-500">Kegiatan ini akan dihapus dari katalog</p>
                     </div>
                 </div>
-                <button onclick="closeDeletePengurusModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
+                <button type="button" onclick="closeDeletePkbModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
             <div class="p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200/80 text-xs space-y-1">
-                <p id="delPengurusJabatanDisplay" class="font-bold text-emerald-700 uppercase">-</p>
-                <p id="delPengurusNamaDisplay" class="font-display font-bold text-sm text-navy-900">-</p>
-                <p id="delPengurusSatkerDisplay" class="text-[11px] text-slate-500">-</p>
+                <p id="delPkbIdDisplay" class="font-mono font-bold text-rose-700 uppercase">-</p>
+                <p id="delPkbJudulDisplay" class="font-display font-bold text-sm text-navy-900">-</p>
             </div>
 
-            <input type="hidden" id="delPengurusIndexHidden" value="-1">
+            <input type="hidden" id="delPkbIndexHidden" value="-1">
             <div class="pt-1 flex items-center justify-end gap-2">
-                <button type="button" onclick="closeDeletePengurusModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">Batal</button>
-                <button type="button" onclick="confirmDeletePengurus()" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow flex items-center gap-1.5">
-                    <i class="fa-solid fa-trash-can"></i> Ya, Hapus Pengurus
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ======================================================================= -->
-    <!-- MODAL 8: TAMBAH / EDIT BAB & PASAL DOKUMEN AD/ART                       -->
-    <!-- ======================================================================= -->
-    <div id="modalAdArt" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h4 id="modalAdArtTitle" class="font-display font-bold text-base text-navy-900">Tambah / Edit Dokumen AD/ART</h4>
-                <button onclick="closeModalAdArt()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <form id="formAdArt" onsubmit="saveAdArtItem(event)" class="space-y-3 text-xs sm:text-sm">
-                <input type="hidden" id="adArtEditIndex" value="-1">
-                <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Judul Bab / Bagian</label>
-                    <input type="text" id="adArtBabInput" required placeholder="Contoh: BAB VI : PERANGKAT DAN KELENGKAPAN ORGANISASI" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-navy-900">
-                </div>
-                <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Keterangan Pasal / Sumber Dokumen</label>
-                    <input type="text" id="adArtPasalInput" required placeholder="Contoh: Pasal 30 – Pasal 35 Anggaran Dasar PGRI" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-navy-900">
-                </div>
-                <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Isi Lengkap Pasal / Ketentuan AD/ART</label>
-                    <textarea id="adArtIsiInput" rows="6" required placeholder="Tuliskan atau sunting isi lengkap ketentuan AD/ART di sini..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-navy-900 leading-relaxed"></textarea>
-                </div>
-                <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeModalAdArt()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-semibold">Batal</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl navy-crystal text-gold-300 font-bold shadow">Simpan Dokumen AD/ART</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- ======================================================================= -->
-    <!-- MODAL 9: KONFIRMASI HAPUS BAB / PASAL AD/ART                            -->
-    <!-- ======================================================================= -->
-    <div id="deleteAdArtModal" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-rose-200 space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
-                        <i class="fa-solid fa-file-circle-xmark"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-display font-bold text-base text-navy-900">Hapus Bagian Dokumen AD/ART</h4>
-                        <p class="text-[11px] text-slate-500">Bagian ini akan dihapus dari daftar AD/ART</p>
-                    </div>
-                </div>
-                <button onclick="closeDeleteAdArtModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <div class="p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200/80 text-xs space-y-1">
-                <p id="delAdArtPasalDisplay" class="font-bold text-emerald-700 uppercase">-</p>
-                <p id="delAdArtBabDisplay" class="font-display font-bold text-sm text-navy-900">-</p>
-            </div>
-
-            <input type="hidden" id="delAdArtIndexHidden" value="-1">
-            <div class="pt-1 flex items-center justify-end gap-2">
-                <button type="button" onclick="closeDeleteAdArtModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">Batal</button>
-                <button type="button" onclick="confirmDeleteAdArt()" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow flex items-center gap-1.5">
-                    <i class="fa-solid fa-trash-can"></i> Ya, Hapus Bagian Ini
+                <button type="button" onclick="closeDeletePkbModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">Batal</button>
+                <button type="button" onclick="confirmDeletePkb()" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow flex items-center gap-1.5">
+                    <i class="fa-solid fa-trash-can"></i> Ya, Hapus Kegiatan
                 </button>
             </div>
         </div>
@@ -3560,6 +3136,11 @@
         // ==================== RENDER MODUL 5: AGENDA PKB & SERTIFIKAT ====================
         function renderPkbGrid() {
             const grid = document.getElementById('pkbEventsGrid');
+            if (!grid) return;
+            if (appState.pkb.length === 0) {
+                grid.innerHTML = `<div class="col-span-full bg-white rounded-2xl p-8 text-center text-slate-400 text-sm border border-slate-200/80">Belum ada kegiatan PKB yang terdaftar. Klik tombol <strong>+ Tambah Kegiatan PKB</strong> di atas.</div>`;
+                return;
+            }
             grid.innerHTML = appState.pkb.map((ev, index) => `
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex flex-col justify-between card-hover">
                     <div class="space-y-3">
@@ -3576,14 +3157,25 @@
                             <p class="flex items-center gap-2"><i class="fa-solid fa-users text-navy-900 w-4"></i> Terdaftar: <strong>${ev.terdaftar}</strong> dari ${ev.kuota}</p>
                         </div>
                     </div>
-                    <div class="mt-5 pt-4 border-t border-slate-100">
-                        <button onclick="registerPkbOneClick(${index})" class="w-full py-2.5 rounded-xl ${ev.status.includes('Dibuka') ? 'navy-crystal text-gold-300 hover:opacity-95' : 'bg-emerald-600 text-white hover:bg-emerald-700'} font-bold text-xs transition flex items-center justify-center gap-2">
+                    <div class="mt-5 pt-4 border-t border-slate-100 space-y-2">
+                        <button type="button" onclick="registerPkbOneClick(${index})" class="w-full py-2.5 rounded-xl ${ev.status.includes('Dibuka') ? 'navy-crystal text-gold-300 hover:opacity-95' : 'bg-emerald-600 text-white hover:bg-emerald-700'} font-bold text-xs transition flex items-center justify-center gap-2">
                             <i class="fa-solid ${ev.status.includes('Dibuka') ? 'fa-bolt' : 'fa-certificate'}"></i>
                             ${ev.status.includes('Dibuka') ? 'Daftar 1-Klik Sekarang' : 'Unduh Materi & Sertifikat'}
                         </button>
+                        <div class="admin-only-el flex items-center justify-end gap-1.5 pt-1">
+                            <button type="button" onclick="openEditPkbModal(${index})" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-navy-900 text-[11px] font-semibold inline-flex items-center gap-1 transition">
+                                <i class="fa-solid fa-pen-to-square text-emerald-600"></i> Edit
+                            </button>
+                            <button type="button" onclick="openDeletePkbModal(${index})" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-[11px] font-semibold inline-flex items-center gap-1 transition">
+                                <i class="fa-solid fa-trash-can"></i> Hapus
+                            </button>
+                        </div>
                     </div>
                 </div>
             `).join('');
+            if (currentUserRole === 'MEMBER') {
+                document.querySelectorAll('.admin-only-el').forEach(el => el.classList.add('hidden'));
+            }
         }
 
         function registerPkbOneClick(idx) {
@@ -3591,7 +3183,86 @@
             ev.terdaftar += 1;
             saveState();
             renderPkbGrid();
+            postToGoogleSheets('SYNC_ALL', appState);
             showToast(`Berhasil terdaftar pada: ${ev.judul}`, 'emerald');
+        }
+
+        function openModalTambahPkb() {
+            document.getElementById('pkbEditIndex').value = '-1';
+            document.getElementById('modalPkbTitle').textContent = 'Tambah Kegiatan PKB Baru';
+            document.getElementById('formPkb').reset();
+            document.getElementById('pkbModal').classList.remove('hidden');
+        }
+
+        function openEditPkbModal(index) {
+            const ev = appState.pkb[index];
+            if (!ev) return;
+            document.getElementById('pkbEditIndex').value = index;
+            document.getElementById('modalPkbTitle').textContent = `Edit Kegiatan PKB (${ev.id})`;
+            document.getElementById('pkbJudul').value = ev.judul;
+            document.getElementById('pkbTanggal').value = ev.tanggal;
+            document.getElementById('pkbJp').value = ev.jp;
+            document.getElementById('pkbLokasi').value = ev.lokasi;
+            document.getElementById('pkbKuota').value = ev.kuota;
+            document.getElementById('pkbStatus').value = ev.status;
+            document.getElementById('modalPkb').classList.remove('hidden');
+        }
+
+        function closeModalPkb() {
+            document.getElementById('modalPkb').classList.add('hidden');
+        }
+
+        function savePkbItem(e) {
+            e.preventDefault();
+            const editIdx = Number(document.getElementById('pkbEditIndex').value);
+            const newItem = {
+                id: editIdx >= 0 && appState.pkb[editIdx] ? appState.pkb[editIdx].id : 'PKB-' + Math.floor(10 + Math.random() * 90),
+                judul: document.getElementById('pkbJudul').value.trim(),
+                tanggal: document.getElementById('pkbTanggal').value.trim(),
+                lokasi: document.getElementById('pkbLokasi').value.trim(),
+                jp: document.getElementById('pkbJp').value.trim(),
+                kuota: document.getElementById('pkbKuota').value.trim(),
+                terdaftar: editIdx >= 0 && appState.pkb[editIdx] ? appState.pkb[editIdx].terdaftar : 0,
+                status: document.getElementById('pkbStatus').value
+            };
+
+            if (editIdx >= 0 && appState.pkb[editIdx]) {
+                appState.pkb[editIdx] = newItem;
+                showToast('Kegiatan PKB berhasil diperbarui!', 'emerald');
+            } else {
+                appState.pkb.unshift(newItem);
+                showToast('Kegiatan PKB baru berhasil ditambahkan!', 'emerald');
+            }
+
+            saveState();
+            renderPkbGrid();
+            postToGoogleSheets('SYNC_ALL', appState);
+            closeModalPkb();
+        }
+
+        function openDeletePkbModal(index) {
+            const ev = appState.pkb[index];
+            if (!ev) return;
+            document.getElementById('delPkbIndexHidden').value = index;
+            document.getElementById('delPkbIdDisplay').textContent = `${ev.id} • ${ev.tanggal}`;
+            document.getElementById('delPkbJudulDisplay').textContent = ev.judul;
+            document.getElementById('deletePkbModal').classList.remove('hidden');
+        }
+
+        function closeDeletePkbModal() {
+            document.getElementById('deletePkbModal').classList.add('hidden');
+        }
+
+        function confirmDeletePkb() {
+            const idx = Number(document.getElementById('delPkbIndexHidden').value);
+            if (idx >= 0 && appState.pkb[idx]) {
+                const removed = appState.pkb.splice(idx, 1)[0];
+                saveState();
+                renderPkbGrid();
+                postToGoogleSheets('SYNC_ALL', appState);
+                showToast(`Kegiatan "${removed.judul}" telah dihapus.`, 'gold');
+            }
+            closeDeletePkbModal();
         }
 
         function verifyAndDownloadCertificate() {
