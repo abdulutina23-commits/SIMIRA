@@ -247,14 +247,6 @@
                     <span class="inline-flex items-center gap-1.5">
                         <i class="fa-solid fa-shield-halved"></i> Portal Resmi SIMIRA
                     </span>
-                    <div class="flex items-center gap-2">
-                        <button type="button" onclick="fillDefaultCredentials('ADMIN')" class="px-2.5 py-1 rounded-lg bg-navy-900/10 text-navy-900 hover:bg-navy-900 hover:text-gold-300 text-[11px] font-bold transition">
-                            Demo Admin
-                        </button>
-                        <button type="button" onclick="fillDefaultCredentials('MEMBER')" class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 text-[11px] font-bold transition">
-                            Demo Anggota
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Header Masuk Akun -->
@@ -1237,11 +1229,16 @@
                     <div>
                         <span class="text-xs uppercase tracking-widest text-gold-300 font-bold">Pusat Kendali & Kustomisasi</span>
                         <h3 class="font-display text-xl sm:text-2xl font-bold mt-1">Pengaturan Aplikasi SIMIRA</h3>
-                        <p class="text-xs text-slate-300 mt-1">Sesuaikan tema warna, ukuran huruf, logo via link Google Drive, serta kredensial login pengguna.</p>
+                        <p class="text-xs text-slate-300 mt-1">Sesuaikan tema warna, ukuran huruf, pejabat penanda tangan dokumen, logo via Google Drive, serta penyimpanan data.</p>
                     </div>
-                    <button onclick="resetDemoData()" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-gold-300 border border-gold-500/30 font-semibold text-xs whitespace-nowrap transition">
-                        <i class="fa-solid fa-rotate-left mr-1.5"></i> Pulihkan Pengaturan Pabrik
-                    </button>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="exportHtmlWithEmbeddedData()" class="px-4 py-2.5 rounded-xl gold-gradient text-navy-950 font-bold text-xs whitespace-nowrap shadow hover:opacity-95 transition flex items-center gap-1.5" title="Unduh file index.html yang sudah berisi seluruh data yang Anda input">
+                            <i class="fa-solid fa-file-code"></i> Simpan Data ke File index.html
+                        </button>
+                        <button onclick="clearAllDummyAndResetClean()" class="px-4 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-400/30 font-semibold text-xs whitespace-nowrap transition">
+                            <i class="fa-solid fa-broom mr-1.5"></i> Bersihkan Data Dummy
+                        </button>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -1345,6 +1342,44 @@
                                 </div>
                             </form>
                         </div>
+
+                        <!-- Kartu Pengaturan Pejabat Penanda Tangan Dokumen & KTA -->
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-4">
+                            <div class="border-b border-slate-100 pb-3 flex items-start justify-between gap-2">
+                                <div>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Otorisasi Dokumen Resmi</span>
+                                    <h4 class="font-display font-bold text-lg text-navy-900 mt-0.5">Pejabat Penanda Tangan Dokumen & KTA</h4>
+                                    <p class="text-xs text-slate-500 mt-1">Atur Nama Lengkap, NIP/NPA, Jabatan, dan Kota/Tempat yang akan tercantum otomatis pada blok tanda tangan seluruh cetakan PDF dan KTA Digital.</p>
+                                </div>
+                                <span class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-signature text-lg"></i>
+                                </span>
+                            </div>
+
+                            <form onsubmit="saveSignatorySetting(event)" class="space-y-3 text-xs sm:text-sm">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block font-semibold text-slate-700 mb-1">Tempat / Kota Penetapan</label>
+                                        <input type="text" id="settingSignCity" required placeholder="Contoh: Gorontalo Utara" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-navy-900">
+                                    </div>
+                                    <div>
+                                        <label class="block font-semibold text-slate-700 mb-1">Jabatan Penanda Tangan</label>
+                                        <input type="text" id="settingSignTitle" required placeholder="Contoh: Ketua Cabang Khusus Kemenag" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-navy-900">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-slate-700 mb-1">Nama Lengkap & Gelar Penanda Tangan</label>
+                                    <input type="text" id="settingSignName" required placeholder="Contoh: Dr. H. Arfan Tilome, M.Pd.I." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-navy-900">
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-slate-700 mb-1">NIP / NPA Penanda Tangan</label>
+                                    <input type="text" id="settingSignNip" required placeholder="Contoh: NIP. 197804122005011004 / NPA. 250501001" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-navy-900">
+                                </div>
+                                <button type="submit" class="w-full py-3 rounded-xl navy-crystal text-gold-300 font-bold shadow hover:opacity-95 transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-file-signature"></i> Simpan Pejabat Penanda Tangan
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
                     <!-- Kolom Kanan: Pengaturan Username, Kata Sandi & Cloud -->
@@ -1390,17 +1425,22 @@
                         <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-3">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <span class="text-xs font-bold uppercase tracking-wider text-gold-600">Sinkronisasi Cloud</span>
-                                    <h4 class="font-display font-bold text-base text-navy-900">Koneksi Google Sheets API</h4>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-gold-600">Sinkronisasi Cloud & Backup Permanen</span>
+                                    <h4 class="font-display font-bold text-base text-navy-900">Koneksi Google Sheets & Simpan ke File HTML</h4>
                                 </div>
                                 <i class="fa-solid fa-cloud-arrow-up text-emerald-600 text-xl"></i>
                             </div>
                             <p class="text-xs text-slate-500 leading-relaxed">
-                                Atur tautan Web App Google Apps Script (`Code.gs`) untuk mencadangkan data keanggotaan, iuran, dan aspirasi ke Google Sheets organisasi.
+                                Hubungkan ke Google Sheets (`Code.gs`) atau unduh langsung berkas `index.html` yang sudah berisi seluruh data yang Anda input agar tersimpan permanen di dalam kode file.
                             </p>
-                            <button type="button" onclick="openConfigModal()" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-navy-900 font-semibold text-xs transition">
-                                <i class="fa-solid fa-link mr-1.5"></i> Buka Konfigurasi URL Google Sheets
-                            </button>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <button type="button" onclick="openConfigModal()" class="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-navy-900 font-semibold text-xs transition flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid fa-link"></i> Konfigurasi URL Cloud
+                                </button>
+                                <button type="button" onclick="exportHtmlWithEmbeddedData()" class="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow transition flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid fa-download"></i> Unduh index.html + Data
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Kartu Impor Anggota Massal via Link PDF Google Drive -->
@@ -1583,8 +1623,15 @@
 
                 <!-- Card Footer -->
                 <div class="mt-4 pt-2.5 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-300">
-                    <span>Berlaku Selama Menjadi Anggota Aktif</span>
-                    <span class="text-gold-300 font-semibold">Ketua Cabang Khusus Kemenag</span>
+                    <div>
+                        <span class="block text-slate-400">Berlaku Selama Menjadi Anggota Aktif</span>
+                        <span id="ktaSignCityDate" class="text-[9px] text-emerald-300">Gorontalo Utara</span>
+                    </div>
+                    <div class="text-right">
+                        <span id="ktaSignTitle" class="text-gold-300 font-semibold block">Ketua Cabang Khusus Kemenag</span>
+                        <span id="ktaSignName" class="text-white font-bold block">-</span>
+                        <span id="ktaSignNip" class="text-[9px] text-slate-300 font-mono block">-</span>
+                    </div>
                 </div>
             </div>
 
@@ -1844,9 +1891,14 @@
             </div>
 
             <div class="flex items-center justify-between pt-3 border-t border-slate-100">
-                <button type="button" onclick="syncFromCloud()" class="px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold flex items-center gap-1.5">
-                    <i class="fa-solid fa-cloud-arrow-down"></i> Tarik Data dari Sheets
-                </button>
+                <div class="flex flex-wrap gap-1.5">
+                    <button type="button" onclick="syncFromCloud()" class="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-cloud-arrow-down"></i> Tarik dari Sheets
+                    </button>
+                    <button type="button" onclick="pushAllStateToCloud()" class="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Kirim Semua ke Sheets
+                    </button>
+                </div>
                 <div class="flex gap-2">
                     <button type="button" onclick="closeConfigModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-semibold text-slate-600">Tutup</button>
                     <button type="button" onclick="saveGasUrlConfig()" class="px-5 py-2 rounded-xl navy-crystal text-gold-300 text-xs font-bold">Simpan Koneksi</button>
@@ -2021,9 +2073,10 @@
         let currentLoggedMember = null;
         let currentActiveKtaNpa = '';
 
-        // Data Awal Realistis Kontekstual Kemenag Kab. Gorontalo Utara
+        // Data Awal Bersih Tanpa Data Dummy (Seluruh input pengguna disimpan ke localStorage & dapat diunduh permanen ke file index.html)
+        /*__SIMIRA_EMBEDDED_DATA_START__*/
         const INITIAL_DATA = {
-            gasUrl: '',
+            gasUrl: 'https://script.google.com/macros/s/AKfycbzmO9SVrtYhG0UvyqJCJTacMiAHmIjKKBfcidZ-MRsp9cwVA6fAy_uk1LZr1qJ_UI0/exec',
             settings: {
                 theme: 'navy',
                 fontSize: 'md',
@@ -2031,109 +2084,40 @@
                 rawLogoInput: '',
                 username: 'admin@kemenag.go.id',
                 password: 'admin123',
-                displayName: 'Admin PGRI Kemenag Gorut'
+                displayName: 'Admin PGRI Kemenag Gorut',
+                signatoryCity: 'Gorontalo Utara',
+                signatoryTitle: 'Ketua Cabang Khusus Kemenag',
+                signatoryName: 'Dr. H. Arfan Tilome, M.Pd.I.',
+                signatoryNip: 'NIP. 197804122005011004'
             },
             anggota: [],
-            pengurus: [
-                { jabatan: 'Pelindung / Dewan Pembina', nama: 'Kepala Kantor Kementerian Agama Kab. Gorontalo Utara', satker: 'Kankemenag Kab. Gorontalo Utara', level: 'Dewan Pembina' },
-                { jabatan: 'Pembina Teknis Madrasah', nama: 'Kepala Seksi Pendidikan Madrasah Kankemenag Gorut', satker: 'Seksi Penmad Kemenag Gorut', level: 'Dewan Pembina' },
-                { jabatan: 'Ketua Cabang Khusus', nama: 'Dr. H. Arfan Tilome, M.Pd.I.', satker: 'Pokjawas Kemenag Gorut', level: 'Pengurus Harian' },
-                { jabatan: 'Wakil Ketua', nama: 'Dra. Hj. Rahmawati Polontalo, M.Pd.', satker: 'MAN 1 Gorontalo Utara', level: 'Pengurus Harian' },
-                { jabatan: 'Sekretaris', nama: 'Mohamad Rizal Daud, S.Pd., M.Si.', satker: 'MTsN 1 Gorontalo Utara', level: 'Pengurus Harian' },
-                { jabatan: 'Bendahara', nama: 'Hj. Nurhayati Hasan, S.Ag.', satker: 'MIN 1 Gorontalo Utara', level: 'Pengurus Harian' },
-                { jabatan: 'Ketua Bidang Organisasi & Kaderisasi', nama: 'Ust. Abdul Wahab Dali, S.Pd.I.', satker: 'MTs Al-Khairaat Kwandang', level: 'Ketua Seksi / Bidang' },
-                { jabatan: 'Ketua Bidang PKB & Litbang', nama: 'Fadel Muhammad Monoarfa, S.Pd.I.', satker: 'MTsN 1 Gorontalo Utara', level: 'Ketua Seksi / Bidang' },
-                { jabatan: 'Ketua Bidang Advokasi, LKBH & Kesejahteraan', nama: 'Zulkifli Katili, S.Pd.', satker: 'MAN 1 Gorontalo Utara', level: 'Ketua Seksi / Bidang' }
-            ],
-            adArt: [
-                {
-                    bab: 'BAB I : NAMA, KEDUDUKAN, DAN ATRIBUT ORGANISASI',
-                    pasal: 'Pasal 1 – Pasal 4 Anggaran Dasar PGRI',
-                    isi: 'Organisasi ini bernama Persatuan Guru Republik Indonesia disingkat PGRI. PGRI Cabang Khusus Kementerian Agama Kabupaten Gorontalo Utara merupakan perangkat organisasi yang mewadahi guru dan tenaga kependidikan di bawah naungan satuan kerja Kementerian Agama Kabupaten Gorontalo Utara.'
-                },
-                {
-                    bab: 'BAB II : JATI DIRI, SIFAT, DAN SEMBOYAN',
-                    pasal: 'Pasal 5 – Pasal 8 Anggaran Dasar PGRI',
-                    isi: 'PGRI adalah organisasi profesi, perjuangan, dan ketenagakerjaan yang bersifat unitaristik, independen, dan non-partisan. Unitaristik berarti tanpa memandang perbedaan ijazah, tempat kerja (Negeri maupun Swasta, Kementerian Pendidikan maupun Kementerian Agama), status kepegawaian (PNS, PPPK, Non-ASN), dan gender.'
-                },
-                {
-                    bab: 'BAB III : TUJUAN DAN TUGAS POKOK CABANG KHUSUS KEMENAG',
-                    pasal: 'Pasal 12 – Pasal 15 Anggaran Dasar & ART',
-                    isi: 'Mewujudkan guru madrasah (RA, MI, MTs, MA) dan pengawas di lingkungan Kemenag Gorontalo Utara yang profesional, bermartabat, terlindungi hak-hak keprofesiannya, serta sejahtera melalui peningkatan mutu PKB dan advokasi terpadu.'
-                },
-                {
-                    bab: 'BAB IV : KEANGGOTAAN, KEWAJIBAN, DAN HAK ANGGOTA',
-                    pasal: 'Pasal 21 – Pasal 28 Anggaran Rumah Tangga',
-                    isi: 'Setiap guru dan tenaga kependidikan madrasah berhak memperoleh Nomor Pokok Anggota (NPA) Nasional, Kartu Tanda Anggota (KTA), perlindungan hukum profesi (LKBH PGRI), pembinaan karir, serta berkewajiban menjaga kode etik guru Indonesia dan menunaikan iuran anggota secara tertib.'
-                },
-                {
-                    bab: 'BAB V : KEUANGAN DAN DANA SOLIDARITAS ANGGOTA',
-                    pasal: 'Pasal 65 – Pasal 69 Anggaran Rumah Tangga',
-                    isi: 'Keuangan organisasi bersumber dari uang pangkal, iuran bulanan anggota, sumbangan sah yang tidak mengikat, serta dikelola secara transparan dan akuntabel untuk kegiatan keprofesian, operasional ranting, serta santunan solidaritas sosial anggota.'
-                }
-            ],
-            keuangan: [
-                { id: 'TRX-001', tanggal: '2025-05-02', nama: 'Kolektif Ranting MIN 1 Gorontalo Utara', bulan: 'Mei 2025', kategori: 'Iuran Masuk', nominal: 1450000 },
-                { id: 'TRX-002', tanggal: '2025-05-04', nama: 'Kolektif Ranting MTsN 1 Gorontalo Utara', bulan: 'Mei 2025', kategori: 'Iuran Masuk', nominal: 1850000 },
-                { id: 'TRX-003', tanggal: '2025-05-05', nama: 'Kolektif Ranting MAN 1 Gorontalo Utara', bulan: 'Mei 2025', kategori: 'Iuran Masuk', nominal: 1600000 },
-                { id: 'TRX-004', tanggal: '2025-05-07', nama: 'Santunan Solidaritas Anggota Sakit & Purna Tugas', bulan: 'Mei 2025', kategori: 'Dana keluar', nominal: 1200000 },
-                { id: 'TRX-005', tanggal: '2025-05-10', nama: 'Kolektif KKRA & Ranting Madrasah Swasta', bulan: 'Mei 2025', kategori: 'Iuran Masuk', nominal: 950000 }
-            ],
-            pkb: [
-                {
-                    id: 'PKB-01',
-                    judul: 'Workshop Implementasi Kurikulum Nasional & AI untuk Guru Madrasah',
-                    tanggal: '24 Mei 2025',
-                    lokasi: 'Aula Kankemenag Kab. Gorontalo Utara',
-                    jp: '32 JP',
-                    kuota: '150 Peserta',
-                    terdaftar: 118,
-                    status: 'Pendaftaran Dibuka'
-                },
-                {
-                    id: 'PKB-02',
-                    judul: 'Bimtek Penyusunan Karya Tulis Ilmiah (PTK) & Kenaikan Pangkat Guru',
-                    tanggal: '14 Juni 2025',
-                    lokasi: 'Aula MAN 1 Gorontalo Utara & Zoom Meeting',
-                    jp: '36 JP',
-                    kuota: '200 Peserta',
-                    terdaftar: 94,
-                    status: 'Pendaftaran Dibuka'
-                },
-                {
-                    id: 'PKB-03',
-                    judul: 'Konferensi Kerja Cabang Khusus (Konkercab) I & Seminar Nasional',
-                    tanggal: '12 April 2025',
-                    lokasi: 'Gedung Al-Indah Kwandang',
-                    jp: '24 JP',
-                    kuota: '250 Peserta',
-                    terdaftar: 250,
-                    status: 'Selesai - Sertifikat Tersedia'
-                }
-            ],
-            aspirasi: [
-                {
-                    id: 'ADV-101',
-                    waktu: '10 Mei 2025',
-                    nip: '7405021405910002',
-                    nama: 'Fatmawati Latif, S.Pd. - MA Al-Khairaat Gentuma',
-                    kategori: 'Administrasi Kepegawaian & TPG',
-                    isi: 'Mohon pendampingan sinkronisasi beban kerja Simpatika untuk penerbitan SKAKPT Tunjangan Profesi Guru semester berjalan.',
-                    status: 'Sedang Ditindaklanjuti Pengurus'
-                },
-                {
-                    id: 'ADV-102',
-                    waktu: '04 Mei 2025',
-                    nip: '250501003',
-                    nama: 'Ranting MTsN 1 Gorontalo Utara',
-                    kategori: 'Dana Solidaritas Sosial & Kedukaan',
-                    isi: 'Laporan anggota purna tugas atas nama Bapak Drs. H. Ibrahim di lingkungan MTsN 1 Gorut untuk penyaluran cenderamata solidaritas PGRI.',
-                    status: 'Selesai Disalurkan'
-                }
-            ]
+            pengurus: [],
+            adArt: [],
+            keuangan: [],
+            pkb: [],
+            aspirasi: []
         };
+        /*__SIMIRA_EMBEDDED_DATA_END__*/
 
         let appState = {};
+
+        // Daftar teks data dummy lama yang akan dibersihkan otomatis jika masih tertinggal di penyimpanan browser
+        const LEGACY_DUMMY_IDS = {
+            keuangan: ['TRX-001', 'TRX-002', 'TRX-003', 'TRX-004', 'TRX-005'],
+            pkb: ['PKB-01', 'PKB-02', 'PKB-03'],
+            aspirasi: ['ADV-101', 'ADV-102'],
+            pengurusNames: [
+                'Kepala Kantor Kementerian Agama Kab. Gorontalo Utara',
+                'Kepala Seksi Pendidikan Madrasah Kankemenag Gorut',
+                'Dr. H. Arfan Tilome, M.Pd.I.',
+                'Dra. Hj. Rahmawati Polontalo, M.Pd.',
+                'Mohamad Rizal Daud, S.Pd., M.Si.',
+                'Hj. Nurhayati Hasan, S.Ag.',
+                'Ust. Abdul Wahab Dali, S.Pd.I.',
+                'Fadel Muhammad Monoarfa, S.Pd.I.',
+                'Zulkifli Katili, S.Pd.'
+            ]
+        };
 
         // Load or Initialize State
         function initApp() {
@@ -2141,16 +2125,40 @@
             if (saved) {
                 try {
                     appState = JSON.parse(saved);
+                    // Hapus otomatis data dummy bawaan versi lama namun pertahankan semua data asli yang diinput pengguna
+                    if (!appState._dummyCleanedV2) {
+                        if (Array.isArray(appState.keuangan)) {
+                            appState.keuangan = appState.keuangan.filter(k => !LEGACY_DUMMY_IDS.keuangan.includes(k.id));
+                        }
+                        if (Array.isArray(appState.pkb)) {
+                            appState.pkb = appState.pkb.filter(p => !LEGACY_DUMMY_IDS.pkb.includes(p.id));
+                        }
+                        if (Array.isArray(appState.aspirasi)) {
+                            appState.aspirasi = appState.aspirasi.filter(a => !LEGACY_DUMMY_IDS.aspirasi.includes(a.id));
+                        }
+                        if (Array.isArray(appState.pengurus) && appState.pengurus.length === 9 && appState.pengurus.every(p => LEGACY_DUMMY_IDS.pengurusNames.includes(p.nama))) {
+                            appState.pengurus = [];
+                        }
+                        appState._dummyCleanedV2 = true;
+                        saveState();
+                    }
                 } catch (e) {
                     appState = JSON.parse(JSON.stringify(INITIAL_DATA));
                 }
             } else {
                 appState = JSON.parse(JSON.stringify(INITIAL_DATA));
+                appState._dummyCleanedV2 = true;
                 saveState();
             }
             if (!appState.settings) {
                 appState.settings = JSON.parse(JSON.stringify(INITIAL_DATA.settings));
             }
+            // Pastikan field penanda tangan tersedia
+            if (!appState.settings.signatoryCity) appState.settings.signatoryCity = INITIAL_DATA.settings.signatoryCity;
+            if (!appState.settings.signatoryTitle) appState.settings.signatoryTitle = INITIAL_DATA.settings.signatoryTitle;
+            if (!appState.settings.signatoryName) appState.settings.signatoryName = INITIAL_DATA.settings.signatoryName;
+            if (!appState.settings.signatoryNip) appState.settings.signatoryNip = INITIAL_DATA.settings.signatoryNip;
+
             if (appState.gasUrl) {
                 document.getElementById('gasUrlInput').value = appState.gasUrl;
                 updateCloudStatusUI(true);
@@ -2195,8 +2203,8 @@
                 btnAdmin.className = 'py-2 px-3 rounded-lg bg-navy-900 text-gold-300 font-bold text-xs shadow-sm transition flex items-center justify-center gap-1.5';
                 btnMember.className = 'py-2 px-3 rounded-lg text-slate-600 hover:text-navy-900 font-semibold text-xs transition flex items-center justify-center gap-1.5';
                 lblUser.textContent = 'Username / Email Admin Pengurus';
-                inpUser.placeholder = 'Contoh: admin@kemenag.go.id';
-                inpUser.value = appState.settings?.username || 'admin@kemenag.go.id';
+                inpUser.placeholder = 'Masukkan username atau email admin...';
+                inpUser.value = '';
                 passBox.classList.remove('hidden');
                 inpPass.required = true;
                 helper.textContent = 'Masuk sebagai Admin untuk mengelola seluruh basis data, kas, AD/ART, dan pengaturan sistem.';
@@ -2205,7 +2213,7 @@
                 btnAdmin.className = 'py-2 px-3 rounded-lg text-slate-600 hover:text-navy-900 font-semibold text-xs transition flex items-center justify-center gap-1.5';
                 lblUser.textContent = 'NPA PGRI / NIP / Nama Lengkap Anggota';
                 inpUser.placeholder = 'Ketik NPA, NIP, atau Nama Anda...';
-                inpUser.value = appState.anggota[0]?.npa || '750501001';
+                inpUser.value = '';
                 passBox.classList.add('hidden');
                 inpPass.required = false;
                 helper.textContent = 'Anggota cukup memasukkan NPA, NIP/NIK, atau Nama Lengkap untuk mengakses Portal Mandiri.';
@@ -2232,16 +2240,15 @@
                     a.nama.toLowerCase().includes(userInp.toLowerCase())
                 );
 
-                currentLoggedMember = foundMember || {
-                    npa: /^\d+$/.test(userInp) ? userInp : '750501001',
-                    nip: '198604122023211009',
-                    nama: /[a-zA-Z]/.test(userInp) ? userInp : 'Anggota PGRI Kemenag Gorut',
-                    satker: 'MTsN 1 Gorontalo Utara',
-                    jenjang: 'MTs',
-                    statusPegawai: 'PNS',
-                    statusIuran: 'Lunas',
-                    jabatan: 'Anggota Aktif'
-                };
+                if (!foundMember) {
+                    const alertBox = document.getElementById('loginAlertBox');
+                    const alertText = document.getElementById('loginAlertText');
+                    alertBox.className = 'p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2.5';
+                    alertText.textContent = 'Data anggota tidak ditemukan. Pastikan NPA, NIP/NIK, atau Nama Anda sudah terdaftar di Direktori Anggota.';
+                    return;
+                }
+
+                currentLoggedMember = foundMember;
 
                 currentUserRole = 'MEMBER';
                 sessionStorage.setItem(SESSION_UNLOCK_KEY, 'true');
@@ -2274,20 +2281,7 @@
                 const alertBox = document.getElementById('loginAlertBox');
                 const alertText = document.getElementById('loginAlertText');
                 alertBox.className = 'p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2.5';
-                alertText.textContent = `Username atau kata sandi Admin tidak sesuai. Gunakan "${appState.settings.username}" dan sandi "${cfgPass}".`;
-            }
-        }
-
-        function fillDefaultCredentials(role = 'ADMIN') {
-            selectLoginRoleTab(role);
-            if (role === 'ADMIN') {
-                document.getElementById('loginUsernameInput').value = appState.settings?.username || 'admin@kemenag.go.id';
-                document.getElementById('loginPasswordInput').value = appState.settings?.password || 'admin123';
-                showToast('Akun Demo Admin telah diisi. Klik tombol Masuk.', 'emerald');
-            } else {
-                const sampleMember = appState.anggota[0];
-                document.getElementById('loginUsernameInput').value = sampleMember ? sampleMember.nama : 'Salmiaty Hasan, S.Pd';
-                showToast('Akun Demo Portal Anggota telah diisi. Klik tombol Masuk.', 'emerald');
+                alertText.textContent = 'Username atau kata sandi Admin tidak sesuai. Silakan periksa kembali.';
             }
         }
 
@@ -2295,7 +2289,7 @@
             const alertBox = document.getElementById('loginAlertBox');
             const alertText = document.getElementById('loginAlertText');
             alertBox.className = 'p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium flex items-center gap-2.5';
-            alertText.textContent = `Petunjuk Akun Admin — Username: ${appState.settings.username} | Password: ${appState.settings.password}`;
+            alertText.textContent = 'Silakan hubungi Pengurus / Sekretariat PGRI Cabang Khusus Kemenag Gorontalo Utara untuk bantuan pemulihan akses akun.';
         }
 
         function toggleLoginPasswordVisibility() {
@@ -2374,6 +2368,16 @@
                 logoImgs.forEach(img => img.classList.add('hidden'));
                 logoIcons.forEach(ic => ic.classList.remove('hidden'));
             }
+
+            // Perbarui label penanda tangan pada KTA Digital
+            const ktaCityEl = document.getElementById('ktaSignCityDate');
+            const ktaTitleEl = document.getElementById('ktaSignTitle');
+            const ktaNameEl = document.getElementById('ktaSignName');
+            const ktaNipEl = document.getElementById('ktaSignNip');
+            if (ktaCityEl) ktaCityEl.textContent = s.signatoryCity || 'Gorontalo Utara';
+            if (ktaTitleEl) ktaTitleEl.textContent = s.signatoryTitle || 'Ketua Cabang Khusus Kemenag';
+            if (ktaNameEl) ktaNameEl.textContent = s.signatoryName || '-';
+            if (ktaNipEl) ktaNipEl.textContent = s.signatoryNip || '-';
         }
 
         function populateSettingsForm() {
@@ -2382,11 +2386,32 @@
             const dispInp = document.getElementById('settingDisplayName');
             const userInp = document.getElementById('settingUsername');
             const passInp = document.getElementById('settingPassword');
+            const signCityInp = document.getElementById('settingSignCity');
+            const signTitleInp = document.getElementById('settingSignTitle');
+            const signNameInp = document.getElementById('settingSignName');
+            const signNipInp = document.getElementById('settingSignNip');
 
             if (logoInp) logoInp.value = s.rawLogoInput || s.logoUrl || '';
             if (dispInp) dispInp.value = s.displayName || 'Admin PGRI Kemenag Gorut';
             if (userInp) userInp.value = s.username || 'admin@kemenag.go.id';
             if (passInp) passInp.value = s.password || 'admin123';
+            if (signCityInp) signCityInp.value = s.signatoryCity || 'Gorontalo Utara';
+            if (signTitleInp) signTitleInp.value = s.signatoryTitle || 'Ketua Cabang Khusus Kemenag';
+            if (signNameInp) signNameInp.value = s.signatoryName || '';
+            if (signNipInp) signNipInp.value = s.signatoryNip || '';
+        }
+
+        function saveSignatorySetting(e) {
+            e.preventDefault();
+            appState.settings.signatoryCity = document.getElementById('settingSignCity').value.trim();
+            appState.settings.signatoryTitle = document.getElementById('settingSignTitle').value.trim();
+            appState.settings.signatoryName = document.getElementById('settingSignName').value.trim();
+            appState.settings.signatoryNip = document.getElementById('settingSignNip').value.trim();
+            saveState();
+            applyAllUserSettings();
+            renderMemberPersonalPortal();
+            postToGoogleSheets('SAVE_SETTINGS', appState.settings);
+            showToast('Pejabat penanda tangan dokumen & KTA berhasil diperbarui!', 'emerald');
         }
 
         function applyThemeSetting(themeName) {
@@ -2531,6 +2556,14 @@
                             <span class="text-[10px] text-slate-400 uppercase block">Satuan Kerja Madrasah</span>
                             <p class="font-semibold text-emerald-300">${m.satker} (Jenjang ${m.jenjang})</p>
                         </div>
+                        <div class="pt-2.5 mt-2 border-t border-white/10 flex items-center justify-between text-[10px]">
+                            <span class="text-slate-300">${appState.settings?.signatoryCity || 'Gorontalo Utara'}</span>
+                            <div class="text-right">
+                                <span class="text-gold-300 font-semibold block">${appState.settings?.signatoryTitle || 'Ketua Cabang Khusus'}</span>
+                                <span class="text-white font-bold block">${appState.settings?.signatoryName || '-'}</span>
+                                <span class="text-[9px] text-slate-300 font-mono block">${appState.settings?.signatoryNip || '-'}</span>
+                            </div>
+                        </div>
                     </div>
                 `;
             }
@@ -2633,14 +2666,16 @@
             }
             const tabs = ['dashboard', 'informasi', 'anggota', 'keuangan', 'pkb', 'advokasi', 'pengaturan'];
             tabs.forEach(t => {
-                document.getElementById(`view-${t}`).classList.add('hidden');
+                const viewEl = document.getElementById(`view-${t}`);
+                if (viewEl) viewEl.classList.add('hidden');
                 const dNav = document.getElementById(`nav-${t}`);
                 if (dNav) dNav.classList.remove('nav-active');
                 const mNav = document.getElementById(`mnav-${t}`);
                 if (mNav) mNav.classList.remove('mobile-nav-active');
             });
 
-            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            const targetViewEl = document.getElementById(`view-${tabId}`);
+            if (targetViewEl) targetViewEl.classList.remove('hidden');
             const activeDNav = document.getElementById(`nav-${tabId}`);
             if (activeDNav) activeDNav.classList.add('nav-active');
             const activeMNav = document.getElementById(`mnav-${tabId}`);
@@ -3057,6 +3092,7 @@
 
             saveState();
             renderAdArtList();
+            postToGoogleSheets('SYNC_ALL', appState);
             closeModalAdArt();
         }
 
@@ -3079,6 +3115,7 @@
                 const removed = appState.adArt.splice(idx, 1)[0];
                 saveState();
                 renderAdArtList();
+                postToGoogleSheets('SYNC_ALL', appState);
                 showToast(`Bagian "${removed.bab}" telah dihapus dari AD/ART.`, 'gold');
             }
             closeDeleteAdArtModal();
@@ -3928,28 +3965,74 @@
                 const res = await fetch(`${url}?action=GET_ALL`);
                 const json = await res.json();
                 if (json && json.status === 'success') {
-                    if (json.data.anggota?.length) appState.anggota = json.data.anggota;
-                    if (json.data.keuangan?.length) appState.keuangan = json.data.keuangan;
-                    if (json.data.aspirasi?.length) appState.aspirasi = json.data.aspirasi;
+                    if (Array.isArray(json.data.anggota)) appState.anggota = json.data.anggota;
+                    if (Array.isArray(json.data.keuangan)) appState.keuangan = json.data.keuangan;
+                    if (Array.isArray(json.data.aspirasi)) appState.aspirasi = json.data.aspirasi;
+                    if (Array.isArray(json.data.pengurus)) appState.pengurus = json.data.pengurus;
+                    if (Array.isArray(json.data.adArt)) appState.adArt = json.data.adArt;
+                    if (Array.isArray(json.data.pkb)) appState.pkb = json.data.pkb;
+                    if (json.data.settings && Object.keys(json.data.settings).length > 0) {
+                        appState.settings = { ...appState.settings, ...json.data.settings };
+                    }
                     appState.gasUrl = url;
                     saveState();
+                    applyAllUserSettings();
+                    populateSettingsForm();
                     refreshAllViews();
                     closeConfigModal();
-                    showToast('Data berhasil disinkronkan dari Google Sheets!', 'emerald');
+                    showToast('Seluruh data berhasil disinkronkan dari Google Sheets!', 'emerald');
                 }
             } catch (e) {
                 showToast('Pastikan URL Web App sudah di-deploy dengan akses "Anyone".', 'gold');
             }
         }
 
-        function resetDemoData() {
-            localStorage.removeItem(STORAGE_KEY);
-            appState = JSON.parse(JSON.stringify(INITIAL_DATA));
+        async function pushAllStateToCloud() {
+            const url = document.getElementById('gasUrlInput').value.trim() || appState.gasUrl;
+            if (!url) {
+                showToast('Masukkan URL Web App Google Apps Script terlebih dahulu.', 'gold');
+                return;
+            }
+            appState.gasUrl = url;
             saveState();
-            applyAllUserSettings();
-            populateSettingsForm();
+            await postToGoogleSheets('SYNC_ALL', appState);
+            closeConfigModal();
+            showToast('Seluruh data aplikasi Anda telah dikirim ke Google Sheets!', 'emerald');
+        }
+
+        // Fungsi untuk mengunduh file index.html baru yang sudah menanamkan seluruh data input pengguna di dalam kode
+        function exportHtmlWithEmbeddedData() {
+            saveState();
+            const currentDocHtml = document.documentElement.outerHTML;
+            const embeddedDataBlock = `/*__SIMIRA_EMBEDDED_DATA_START__*/\n        const INITIAL_DATA = ${JSON.stringify(appState, null, 12)};\n        /*__SIMIRA_EMBEDDED_DATA_END__*/`;
+
+            const updatedHtml = '<!DOCTYPE html>\n' + currentDocHtml.replace(
+                /\/\*__SIMIRA_EMBEDDED_DATA_START__\*\/[\s\S]*?\/\*__SIMIRA_EMBEDDED_DATA_END__\*\//,
+                embeddedDataBlock
+            );
+
+            const blob = new Blob([updatedHtml], { type: 'text/html;charset=utf-8' });
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(blob);
+            downloadLink.download = 'index.html';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            showToast('File index.html beserta seluruh data Anda berhasil diunduh!', 'emerald');
+        }
+
+        function clearAllDummyAndResetClean() {
+            appState.keuangan = (appState.keuangan || []).filter(k => !LEGACY_DUMMY_IDS.keuangan.includes(k.id));
+            appState.pkb = (appState.pkb || []).filter(p => !LEGACY_DUMMY_IDS.pkb.includes(p.id));
+            appState.aspirasi = (appState.aspirasi || []).filter(a => !LEGACY_DUMMY_IDS.aspirasi.includes(a.id));
+            appState._dummyCleanedV2 = true;
+            saveState();
             refreshAllViews();
-            showToast('Data awal Kemenag Gorontalo Utara berhasil dipulihkan.', 'emerald');
+            showToast('Seluruh sisa data dummy berhasil dibersihkan. Data asli Anda tetap aman!', 'emerald');
+        }
+
+        function resetDemoData() {
+            clearAllDummyAndResetClean();
         }
 
         // ==================== CETAK KTA & REKAPAN PDF TIAP SUB-MENU ====================
@@ -4201,12 +4284,12 @@
                     <span style="font-size:11px; color:#475569;">Tanggal Cetak: ${todayStr}</span>
                 </div>
                 ${bodyHtml}
-                <div style="margin-top:32px; display:flex; justify-content:flex-end;">
-                    <div style="text-align:center; font-size:12px; width:240px;">
-                        <p>Gorontalo Utara, ${todayStr}</p>
-                        <p style="font-weight:bold; margin-bottom:54px;">Pengurus Cabang Khusus Kemenag</p>
-                        <p style="font-weight:bold; text-decoration:underline;">Dr. H. Arfan Tilome, M.Pd.I.</p>
-                        <p style="font-size:11px; color:#475569;">NPA. 250501001</p>
+                <div style="margin-top:32px; display:flex; justify-content:flex-end; page-break-inside:avoid;">
+                    <div style="text-align:center; font-size:12px; min-width:260px;">
+                        <p>${appState.settings?.signatoryCity || 'Gorontalo Utara'}, ${todayStr}</p>
+                        <p style="font-weight:bold; margin-bottom:60px;">${appState.settings?.signatoryTitle || 'Ketua Cabang Khusus Kemenag'}</p>
+                        <p style="font-weight:bold; text-decoration:underline;">${appState.settings?.signatoryName || '........................................'}</p>
+                        <p style="font-size:11px; color:#475569;">${appState.settings?.signatoryNip || 'NIP / NPA. -'}</p>
                     </div>
                 </div>
             `;
