@@ -458,6 +458,10 @@
 
             <!-- Right Quick Actions -->
             <div class="flex items-center gap-2 sm:gap-3">
+                <button id="headerSyncCloudBtn" onclick="syncFromCloud(false)" class="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs sm:text-sm font-bold shadow-sm flex items-center gap-1.5 transition" title="Tarik Data Terbaru dari Perangkat Lain / Google Sheets">
+                    <i id="headerSyncIcon" class="fa-solid fa-arrows-rotate text-amber-600"></i>
+                    <span class="hidden sm:inline">Refresh Cloud</span>
+                </button>
                 <button id="headerAddMemberBtn" onclick="openModalAnggota()" class="admin-only-el px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-1.5 transition">
                     <i class="fa-solid fa-user-plus"></i>
                     <span class="hidden sm:inline">Daftar / Mutakhirkan</span>
@@ -983,6 +987,9 @@
                                 <p class="text-xs text-slate-600">Daftar pengajuan pendaftaran/pemutakhiran mandiri dari Portal Anggota. Jika disetujui, anggota langsung resmi terdaftar dan dapat mengakses seluruh fitur.</p>
                             </div>
                         </div>
+                        <button type="button" onclick="syncFromCloud(false)" class="px-3.5 py-2 rounded-xl bg-white hover:bg-amber-100 text-navy-900 border border-amber-300 text-xs font-bold shadow-sm flex items-center gap-1.5 self-start sm:self-center transition">
+                            <i class="fa-solid fa-cloud-arrow-down text-emerald-600"></i> Cek Kiriman Baru dari Perangkat Lain
+                        </button>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -2022,7 +2029,12 @@
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            <!--div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100"-->
+
+            <div class="space-y-2 text-xs sm:text-sm">
+                <label class="block font-semibold text-slate-700">URL Web App Google Apps Script (`https://script.google.com/macros/s/.../exec`)</label>
+                <input type="url" id="gasUrlInput" placeholder="Tempelkan URL Web App hasil Deploy Code.gs di sini..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:outline-none focus:border-navy-900">
+            </div>
+
             <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 leading-relaxed">
                 <i class="fa-solid fa-triangle-exclamation text-amber-600 mr-1"></i>
                 <strong>PENTING UNTUK GITHUB PAGES:</strong> Setelah menempelkan URL di atas dan menekan <strong>Simpan Koneksi</strong>, wajib klik tombol <strong>"Unduh index.html Siap Upload GitHub"</strong> di bawah ini lalu upload file tersebut ke GitHub agar semua HP/perangkat lain otomatis terhubung ke Google Sheets yang sama!
@@ -2472,7 +2484,7 @@
         // Data Awal Bersih Tanpa Data Dummy (Seluruh input pengguna disimpan ke localStorage & dapat diunduh permanen ke file index.html)
         /*__SIMIRA_EMBEDDED_DATA_START__*/
         const INITIAL_DATA = {
-            gasUrl: 'https://script.google.com/macros/s/AKfycbwZROulbyVod0eKBpnoOF7nJmbw9lT1skv-FLvoKG2tRYn9g1Xvt1HpwGL5np-qAtDl/exec',
+            gasUrl: 'https://script.google.com/macros/s/AKfycbwiDBiYkyLcEQzKgTeHBmFX0MggpkYfi6UurcZINY0HXNIZeCkfHdR8LUnRNy4qXLow/exec',
             settings: {
                 theme: 'navy',
                 fontSize: 'md',
@@ -2559,16 +2571,24 @@
             if (!appState.settings.signatoryName) appState.settings.signatoryName = INITIAL_DATA.settings.signatoryName;
             if (!appState.settings.signatoryNip) appState.settings.signatoryNip = INITIAL_DATA.settings.signatoryNip;
 
-            // Jika di dalam kode HTML (INITIAL_DATA.gasUrl) sudah tertanam URL Apps Script, gunakan otomatis di semua perangkat
+            // Selalu prioritaskan URL Google Apps Script yang tertanam di kode HTML jika gasUrl kosong
             if (!appState.gasUrl && INITIAL_DATA.gasUrl) {
                 appState.gasUrl = INITIAL_DATA.gasUrl;
+                saveState();
             }
 
+            const gasInputEl = document.getElementById('gasUrlInput');
             if (appState.gasUrl) {
-                document.getElementById('gasUrlInput').value = appState.gasUrl;
+                if (gasInputEl) gasInputEl.value = appState.gasUrl;
                 updateCloudStatusUI(true);
                 // TARIK DATA OTOMATIS DARI GOOGLE SHEETS SAAT DIBUKA DI PERANGKAT MANAPUN
                 syncFromCloud(true);
+                // Sinkronisasi berkala setiap 25 detik agar kiriman dari perangkat lain langsung masuk otomatis
+                setInterval(() => {
+                    if (appState.gasUrl && !document.hidden) {
+                        syncFromCloud(true);
+                    }
+                }, 25000);
             }
             applyAllUserSettings();
             populateSettingsForm();
@@ -3696,7 +3716,7 @@
             document.getElementById('selfRegisterModal').classList.add('hidden');
         }
 
-        function submitSelfRegistration(e) {
+        async function submitSelfRegistration(e) {
             e.preventDefault();
             if (!Array.isArray(appState.pendingAnggota)) appState.pendingAnggota = [];
 
@@ -3720,9 +3740,10 @@
             appState.pendingAnggota.unshift(submission);
             saveState();
             renderPendingVerificationTable();
-            // Gunakan ADD_PENDING_ANGGOTA agar tidak menimpa data milik orang lain di Google Sheets
-            postToGoogleSheets('ADD_PENDING_ANGGOTA', submission);
             closeModalSelfRegister();
+
+            showToast('Mengirim data pendaftaran ke server Cloud...', 'emerald');
+            await postToGoogleSheets('ADD_PENDING_ANGGOTA', submission);
 
             const alertBox = document.getElementById('loginAlertBox');
             const alertText = document.getElementById('loginAlertText');
@@ -3786,7 +3807,7 @@
             `).join('');
         }
 
-        function approvePendingMember(index) {
+        async function approvePendingMember(index) {
             const item = appState.pendingAnggota[index];
             if (!item) return;
 
@@ -3815,18 +3836,24 @@
             appState.pendingAnggota.splice(index, 1);
             saveState();
             refreshAllViews();
-            postToGoogleSheets('ADD_ANGGOTA', approvedMember);
-            postToGoogleSheets('SYNC_ALL', appState);
+            await postToGoogleSheets('APPROVE_PENDING_ANGGOTA', {
+                idPengajuan: item.idPengajuan,
+                npa: approvedMember.npa,
+                member: approvedMember
+            });
             showToast(`Disetujui! ${approvedMember.nama} resmi terdaftar dan dapat mengakses semua fitur.`, 'emerald');
         }
 
-        function rejectPendingMember(index) {
+        async function rejectPendingMember(index) {
             const item = appState.pendingAnggota[index];
             if (!item) return;
             appState.pendingAnggota.splice(index, 1);
             saveState();
             renderPendingVerificationTable();
-            postToGoogleSheets('SYNC_ALL', appState);
+            await postToGoogleSheets('REJECT_PENDING_ANGGOTA', {
+                idPengajuan: item.idPengajuan,
+                npa: item.npa
+            });
             showToast(`Pengajuan anggota a.n. ${item.nama} telah ditolak/dihapus.`, 'gold');
         }
 
@@ -4784,35 +4811,43 @@
         }
 
         async function postToGoogleSheets(action, payload) {
-            const targetUrl = appState.gasUrl || INITIAL_DATA.gasUrl;
-            if (!targetUrl) return;
+            const targetUrl = (appState.gasUrl || INITIAL_DATA.gasUrl || '').trim();
+            if (!targetUrl) return false;
             try {
-                // Gunakan text/plain;charset=utf-8 agar TIDAK diblokir oleh kebijakan CORS Google Apps Script saat di-hosting di GitHub Pages
+                // Gunakan text/plain;charset=utf-8 agar TIDAK terkena preflight CORS block oleh Google Apps Script
                 await fetch(targetUrl, {
                     method: 'POST',
                     mode: 'no-cors',
+                    cache: 'no-cache',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action, payload })
                 });
+                return true;
             } catch (err) {
                 console.warn('Data tersimpan di LocalStorage, sinkronisasi latar ditunda:', err);
+                return false;
             }
         }
 
         async function syncFromCloud(silent = false) {
-            const url = (document.getElementById('gasUrlInput')?.value || appState.gasUrl || INITIAL_DATA.gasUrl || '').trim();
+            const inputEl = document.getElementById('gasUrlInput');
+            const url = ((inputEl && inputEl.value) ? inputEl.value : (appState.gasUrl || INITIAL_DATA.gasUrl || '')).trim();
             if (!url) {
                 if (!silent) showToast('Masukkan URL Web App Google Apps Script terlebih dahulu.', 'gold');
                 return;
             }
+            const syncIcon = document.getElementById('headerSyncIcon');
+            if (syncIcon) syncIcon.classList.add('fa-spin');
             try {
-                if (!silent) showToast('Menghubungi Google Sheets...', 'emerald');
-                const res = await fetch(`${url}?action=GET_ALL&t=${Date.now()}`, {
+                if (!silent) showToast('Menarik data terbaru dari Google Sheets...', 'emerald');
+                const separator = url.includes('?') ? '&' : '?';
+                const res = await fetch(`${url}${separator}action=GET_ALL&t=${Date.now()}`, {
                     method: 'GET',
-                    redirect: 'follow'
+                    redirect: 'follow',
+                    cache: 'no-store'
                 });
                 const json = await res.json();
-                if (json && json.status === 'success') {
+                if (json && json.status === 'success' && json.data) {
                     if (Array.isArray(json.data.anggota)) appState.anggota = json.data.anggota;
                     if (Array.isArray(json.data.pendingAnggota)) appState.pendingAnggota = json.data.pendingAnggota;
                     if (Array.isArray(json.data.keuangan)) appState.keuangan = json.data.keuangan;
@@ -4831,65 +4866,19 @@
                     refreshAllViews();
                     if (!silent) {
                         closeConfigModal();
-                        showToast('Seluruh data berhasil disinkronkan dari Google Sheets!', 'emerald');
+                        showToast(`Sinkronisasi berhasil! (${appState.anggota.length} Anggota, ${appState.pendingAnggota.length} Antrean Verifikasi)`, 'emerald');
                     }
                 }
             } catch (e) {
-                if (!silent) showToast('Pastikan URL Web App sudah di-deploy dengan akses "Anyone (Siapa saja)".', 'gold');
-            }
-        }
-
-        async function postToGoogleSheets(action, payload) {
-            if (!appState.gasUrl) return;
-            try {
-                await fetch(appState.gasUrl, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action, payload })
-                });
-            } catch (err) {
-                console.warn('Data tersimpan di LocalStorage, sinkronisasi latar ditunda:', err);
-            }
-        }
-
-        async function syncFromCloud() {
-            const url = document.getElementById('gasUrlInput').value.trim();
-            if (!url) {
-                showToast('Masukkan URL Web App Google Apps Script terlebih dahulu.', 'gold');
-                return;
-            }
-            try {
-                showToast('Menghubungi Google Sheets...', 'emerald');
-                const res = await fetch(`${url}?action=GET_ALL`);
-                const json = await res.json();
-                if (json && json.status === 'success') {
-                    if (Array.isArray(json.data.anggota)) appState.anggota = json.data.anggota;
-                    if (Array.isArray(json.data.pendingAnggota)) appState.pendingAnggota = json.data.pendingAnggota;
-                    if (Array.isArray(json.data.keuangan)) appState.keuangan = json.data.keuangan;
-                    if (Array.isArray(json.data.aspirasi)) appState.aspirasi = json.data.aspirasi;
-                    if (Array.isArray(json.data.pengurus)) appState.pengurus = json.data.pengurus;
-                    if (Array.isArray(json.data.adArt)) appState.adArt = json.data.adArt;
-                    if (Array.isArray(json.data.pkb)) appState.pkb = json.data.pkb;
-                    if (Array.isArray(json.data.kesekretariatan)) appState.kesekretariatan = json.data.kesekretariatan;
-                    if (json.data.settings && Object.keys(json.data.settings).length > 0) {
-                        appState.settings = { ...appState.settings, ...json.data.settings };
-                    }
-                    appState.gasUrl = url;
-                    saveState();
-                    applyAllUserSettings();
-                    populateSettingsForm();
-                    refreshAllViews();
-                    closeConfigModal();
-                    showToast('Seluruh data berhasil disinkronkan dari Google Sheets!', 'emerald');
-                }
-            } catch (e) {
-                showToast('Pastikan URL Web App sudah di-deploy dengan akses "Anyone".', 'gold');
+                if (!silent) showToast('Gagal menarik data. Pastikan Code.gs sudah di-Deploy Baru dengan akses "Anyone / Siapa saja".', 'gold');
+            } finally {
+                if (syncIcon) syncIcon.classList.remove('fa-spin');
             }
         }
 
         async function pushAllStateToCloud() {
-            const url = document.getElementById('gasUrlInput').value.trim() || appState.gasUrl;
+            const inputEl = document.getElementById('gasUrlInput');
+            const url = ((inputEl && inputEl.value) ? inputEl.value : (appState.gasUrl || INITIAL_DATA.gasUrl || '')).trim();
             if (!url) {
                 showToast('Masukkan URL Web App Google Apps Script terlebih dahulu.', 'gold');
                 return;
