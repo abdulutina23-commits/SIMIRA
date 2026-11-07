@@ -318,6 +318,14 @@
                     <button type="submit" class="w-full py-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs sm:text-sm shadow-lg shadow-emerald-900/15 transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-right-to-bracket"></i> Masuk
                     </button>
+
+                    <!-- Tombol Pendaftaran Mandiri Anggota Baru -->
+                    <div id="memberSelfRegisterBox" class="hidden pt-3 border-t border-slate-200/80 text-center space-y-2">
+                        <p class="text-xs text-slate-500">Belum terdaftar di Direktori Anggota SIMIRA?</p>
+                        <button type="button" onclick="openModalSelfRegister()" class="w-full py-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-user-plus text-amber-600"></i> Input Data Mandiri / Daftar Anggota Baru
+                        </button>
+                    </div>
                 </form>
 
                 <!-- Security Footer Box -->
@@ -387,6 +395,11 @@
             <button onclick="switchTab('advokasi')" id="nav-advokasi" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-all">
                 <i class="fa-solid fa-scale-balanced w-5 text-center text-emerald-400"></i>
                 <span id="navTextAdvokasi">Advokasi & Aspirasi</span>
+            </button>
+
+            <button onclick="switchTab('kesekretariatan')" id="nav-kesekretariatan" class="admin-only-el w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-all">
+                <i class="fa-solid fa-folder-open w-5 text-center text-gold-500"></i>
+                <span>Kesekretariatan & Surat</span>
             </button>
 
             <div class="pt-3 mt-3 border-t border-white/10">
@@ -905,8 +918,8 @@
                             <button onclick="openMyOwnKtaModal()" class="px-4 py-2.5 rounded-xl gold-gradient text-navy-950 font-bold text-xs sm:text-sm shadow flex items-center gap-2">
                                 <i class="fa-solid fa-print"></i> Cetak / Unduh KTA Saya
                             </button>
-                            <button onclick="requestMemberDataCorrection()" class="px-4 py-2.5 rounded-xl bg-navy-900 hover:bg-navy-800 text-gold-300 font-semibold text-xs sm:text-sm flex items-center gap-2 transition">
-                                <i class="fa-solid fa-file-signature"></i> Ajukan Perubahan Data
+                            <button onclick="openModalSelfRegister(true)" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow flex items-center gap-2 transition">
+                                <i class="fa-solid fa-pen-to-square"></i> Input / Perbarui Data Saya (Verifikasi Admin)
                             </button>
                         </div>
                     </div>
@@ -954,6 +967,43 @@
 
                 <!-- TAMPILAN KHUSUS ADMIN: TABEL DIREKTORI LENGKAP -->
                 <div id="adminDirectoryView" class="admin-only-el space-y-6">
+
+                <!-- Panel Antrean Verifikasi Pengajuan Anggota Mandiri (Khusus Admin) -->
+                <div id="pendingVerificationPanel" class="bg-amber-50/90 rounded-2xl p-5 shadow-sm border-2 border-amber-300 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-200/80 pb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center text-lg shadow">
+                                <i class="fa-solid fa-user-clock"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="font-display font-bold text-base text-navy-900">Antrean Verifikasi Input Mandiri Anggota</h4>
+                                    <span id="pendingCountBadge" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-rose-600 text-white">0 Menunggu</span>
+                                </div>
+                                <p class="text-xs text-slate-600">Daftar pengajuan pendaftaran/pemutakhiran mandiri dari Portal Anggota. Jika disetujui, anggota langsung resmi terdaftar dan dapat mengakses seluruh fitur.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse bg-white rounded-xl overflow-hidden border border-amber-200">
+                            <thead>
+                                <tr class="bg-navy-900 text-gold-300 text-[11px] uppercase tracking-wider">
+                                    <th class="py-2.5 px-3">Waktu Pengajuan</th>
+                                    <th class="py-2.5 px-3">NPA / NIP / NIK</th>
+                                    <th class="py-2.5 px-3">Nama Lengkap & Jabatan</th>
+                                    <th class="py-2.5 px-3">Satuan Kerja & Jenjang</th>
+                                    <th class="py-2.5 px-3">Status Pegawai</th>
+                                    <th class="py-2.5 px-3 text-center">Keputusan Admin</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingMembersTableBody" class="divide-y divide-slate-100 text-xs">
+                                <!-- Diisi via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- Filter & Search Bar -->
                 <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 space-y-4">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1218,6 +1268,90 @@
                                 <!-- Diisi via JS -->
                             </div>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================================================================= -->
+            <!-- MODUL 8: KESEKRETARIATAN & ARSIP SURAT DIGITAL (KHUSUS ADMIN)     -->
+            <!-- ================================================================= -->
+            <section id="view-kesekretariatan" class="hidden space-y-6">
+                
+                <!-- Header Banner Kesekretariatan -->
+                <div class="navy-crystal rounded-2xl p-6 text-white border border-gold-500/30 shadow-lg flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div>
+                        <span class="text-xs uppercase tracking-widest text-gold-300 font-bold">Manajemen Administrasi & Persuratan</span>
+                        <h3 class="font-display text-xl sm:text-2xl font-bold mt-1">Kesekretariatan & Arsip Surat Digital</h3>
+                        <p class="text-xs text-slate-300 mt-1">Kelola dokumen Surat Masuk, Surat Keluar, SK Kepengurusan, dan Surat Edaran cukup dengan menempelkan tautan Google Drive.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <button type="button" onclick="printSubmenuReport('kesekretariatan')" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-semibold text-xs whitespace-nowrap transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-pdf text-gold-300"></i> Cetak Agenda Surat PDF
+                        </button>
+                        <button type="button" onclick="openModalTambahSurat()" class="px-4 py-2.5 rounded-xl gold-gradient text-navy-950 font-bold text-xs whitespace-nowrap shadow hover:opacity-95 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-circle-plus"></i> + Input File Surat (Link Drive)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bar Pencarian & Filter Kategori Surat -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="sm:col-span-2 relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+                        <input type="text" id="searchSuratInput" oninput="renderSuratList()" placeholder="Cari nomor surat, perihal, atau pengirim/tujuan..." class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-navy-900">
+                    </div>
+                    <select id="filterJenisSurat" onchange="renderSuratList()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm bg-white focus:outline-none focus:border-navy-900">
+                        <option value="ALL">Semua Kategori Dokumen Surat</option>
+                        <option value="Surat Masuk">Surat Masuk</option>
+                        <option value="Surat Keluar">Surat Keluar</option>
+                        <option value="Surat Keputusan (SK)">Surat Keputusan (SK)</option>
+                        <option value="Surat Edaran / Undangan">Surat Edaran / Undangan</option>
+                    </select>
+                </div>
+
+                <!-- Layar Pratinjau Dokumen Google Drive Terpilih -->
+                <div id="suratDriveViewerBox" class="hidden bg-white rounded-2xl p-5 shadow-lg border-2 border-gold-500/50 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-9 h-9 rounded-xl navy-crystal text-gold-300 flex items-center justify-center">
+                                <i class="fa-solid fa-file-lines"></i>
+                            </span>
+                            <div>
+                                <h4 id="viewerSuratTitle" class="font-display font-bold text-sm sm:text-base text-navy-900">Pratinjau Dokumen Surat</h4>
+                                <p id="viewerSuratSubtitle" class="text-xs text-slate-500">Nomor Surat: -</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <a id="viewerSuratExternalBtn" href="#" target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-up-right-from-square"></i> Buka di Tab Baru
+                            </a>
+                            <button type="button" onclick="closeSuratDriveViewer()" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">
+                                Tutup Pratinjau
+                            </button>
+                        </div>
+                    </div>
+                    <div class="w-full h-[480px] rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
+                        <iframe id="suratDriveIframe" class="w-full h-full" src="" allow="autoplay"></iframe>
+                    </div>
+                </div>
+
+                <!-- Tabel Daftar Arsip Surat Kesekretariatan -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="navy-crystal text-white text-[11px] uppercase tracking-wider">
+                                    <th class="py-3.5 px-4">Nomor & Tanggal Surat</th>
+                                    <th class="py-3.5 px-4">Kategori</th>
+                                    <th class="py-3.5 px-4">Perihal / Nama Dokumen Surat</th>
+                                    <th class="py-3.5 px-4">Pengirim / Tujuan</th>
+                                    <th class="py-3.5 px-4 text-center">Dokumen Google Drive & Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="kesekretariatanTableBody" class="divide-y divide-slate-100 text-xs sm:text-sm">
+                                <!-- Diisi via JS -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>
@@ -1534,11 +1668,697 @@
             <i class="fa-solid fa-scale-balanced text-base"></i>
             <span class="text-[10px] mt-1">Advokasi</span>
         </button>
+        <button onclick="switchTab('kesekretariatan')" id="mnav-kesekretariatan" class="admin-only-el flex flex-col items-center py-1 px-2 text-slate-400">
+            <i class="fa-solid fa-folder-open text-base"></i>
+            <span class="text-[10px] mt-1">Surat</span>
+        </button>
         <button onclick="switchTab('pengaturan')" id="mnav-pengaturan" class="admin-only-el flex flex-col items-center py-1 px-2 text-slate-400">
             <i class="fa-solid fa-sliders text-base"></i>
             <span class="text-[10px] mt-1">Setelan</span>
         </button>
     </nav>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 1: GENERATOR KARTU TANDA ANGGOTA (KTA) DIGITAL                    -->
+    <!-- ======================================================================= -->
+    <div id="ktaModal" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gold-500/40 space-y-5 animate-fadeIn">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <h4 class="font-display font-bold text-base text-navy-900">Kartu Tanda Anggota (KTA) Digital</h4>
+                    <p class="text-xs text-slate-500">PGRI Cabang Khusus Kementerian Agama Kab. Gorontalo Utara</p>
+                </div>
+                <button type="button" onclick="closeKtaModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- KTA Card Visual Area -->
+            <div id="printableArea" class="navy-crystal rounded-2xl p-5 text-white shadow-xl border-2 border-gold-500 relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 w-44 h-44 rounded-full bg-emerald-500/15 blur-xl"></div>
+                
+                <!-- Card Header -->
+                <div class="flex items-center justify-between border-b border-gold-500/30 pb-3 mb-4">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-10 h-10 rounded-xl gold-gradient flex items-center justify-center text-navy-950 font-black text-base shadow overflow-hidden p-0.5">
+                            <img class="app-logo-img w-full h-full object-contain bg-white rounded-lg hidden" alt="Logo SIMIRA">
+                            <i class="app-logo-icon fa-solid fa-building-columns"></i>
+                        </div>
+                        <div>
+                            <h5 class="font-display font-extrabold text-xs tracking-wider uppercase text-gold-300">Persatuan Guru Republik Indonesia</h5>
+                            <p class="text-[10px] text-emerald-300 font-semibold">CABANG KHUSUS KEMENAG KAB. GORONTALO UTARA</p>
+                        </div>
+                    </div>
+                    <span class="px-2 py-0.5 rounded bg-emerald-600 text-[10px] font-bold uppercase">Aktif</span>
+                </div>
+
+                <!-- Card Body -->
+                <div class="grid grid-cols-12 gap-4 items-center">
+                    <div class="col-span-8 space-y-1.5 text-xs">
+                        <div>
+                            <span class="text-[10px] text-slate-400 uppercase block">Nama Anggota</span>
+                            <p id="ktaNama" class="font-display font-bold text-sm sm:text-base text-white">-</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <span class="text-[10px] text-slate-400 uppercase block">NPA PGRI</span>
+                                <p id="ktaNpa" class="font-mono font-bold text-gold-300">-</p>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-400 uppercase block">NIP / NUPTK</span>
+                                <p id="ktaNip" class="font-mono text-slate-200 text-[11px]">-</p>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 uppercase block">Satuan Kerja / Ranting</span>
+                            <p id="ktaSatker" class="font-semibold text-emerald-300">-</p>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 uppercase block">Status & Jabatan Organisasi</span>
+                            <p id="ktaStatus" class="text-slate-200 text-[11px]">-</p>
+                        </div>
+                    </div>
+
+                    <!-- Simulated QR Code Verification -->
+                    <div class="col-span-4 flex flex-col items-center justify-center bg-white p-2.5 rounded-xl text-navy-900 shadow-inner">
+                        <svg id="ktaQrSvg" viewBox="0 0 100 100" class="w-20 h-20">
+                            <rect width="100" height="100" fill="#ffffff"/>
+                            <rect x="8" y="8" width="26" height="26" fill="none" stroke="#0A192F" stroke-width="6"/>
+                            <rect x="16" y="16" width="10" height="10" fill="#059669"/>
+                            <rect x="66" y="8" width="26" height="26" fill="none" stroke="#0A192F" stroke-width="6"/>
+                            <rect x="74" y="16" width="10" height="10" fill="#059669"/>
+                            <rect x="8" y="66" width="26" height="26" fill="none" stroke="#0A192F" stroke-width="6"/>
+                            <rect x="16" y="74" width="10" height="10" fill="#059669"/>
+                            <rect x="42" y="12" width="8" height="8" fill="#0A192F"/>
+                            <rect x="42" y="28" width="14" height="8" fill="#0A192F"/>
+                            <rect x="12" y="44" width="18" height="8" fill="#0A192F"/>
+                            <rect x="40" y="42" width="18" height="18" fill="#D4AF37"/>
+                            <rect x="66" y="44" width="22" height="8" fill="#0A192F"/>
+                            <rect x="44" y="68" width="10" height="22" fill="#0A192F"/>
+                            <rect x="64" y="66" width="12" height="12" fill="#059669"/>
+                            <rect x="80" y="78" width="12" height="12" fill="#0A192F"/>
+                        </svg>
+                        <span class="text-[9px] font-mono font-bold text-navy-900 mt-1">VERIFIED-GORUT</span>
+                    </div>
+                </div>
+
+                <!-- Card Footer with Dynamic Signatory -->
+                <div class="mt-4 pt-2.5 border-t border-white/10 flex items-end justify-between text-[10px] text-slate-300">
+                    <div>
+                        <span class="block text-emerald-300 font-semibold">Berlaku Selama Menjadi Anggota Aktif</span>
+                        <span id="ktaSignCityDate" class="text-[9px] text-slate-400">Gorontalo Utara</span>
+                    </div>
+                    <div class="text-right">
+                        <span id="ktaSignTitle" class="text-gold-300 font-semibold block">Ketua Cabang Khusus Kemenag</span>
+                        <span id="ktaSignName" class="text-white font-bold underline block mt-2">Dr. H. Arfan Tilome, M.Pd.I.</span>
+                        <span id="ktaSignNip" class="text-[9px] text-slate-300 font-mono block">NIP. 197804122005011004</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div id="ktaAdminActionButtons" class="admin-only-el flex items-center gap-1.5">
+                    <button type="button" onclick="promptEditMemberFromKta()" class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-navy-900 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-pen-to-square text-emerald-600"></i> Edit
+                    </button>
+                    <button type="button" id="btnDeleteFromKtaModal" onclick="promptDeleteMemberFromKta()" class="px-3.5 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-trash-can"></i> Hapus
+                    </button>
+                </div>
+                <div class="flex items-center gap-2 ml-auto">
+                    <button type="button" onclick="closeKtaModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">Tutup</button>
+                    <button type="button" onclick="printKtaCardNow()" class="px-5 py-2.5 rounded-xl gold-gradient text-navy-950 text-xs font-bold shadow flex items-center gap-2">
+                        <i class="fa-solid fa-print"></i> Cetak / Simpan PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 6: KONFIRMASI HAPUS ANGGOTA TERDAFTAR                             -->
+    <!-- ======================================================================= -->
+    <div id="deleteMemberModal" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-rose-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
+                        <i class="fa-solid fa-user-xmark"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-display font-bold text-base text-navy-900">Hapus Anggota Terdaftar</h4>
+                        <p class="text-[11px] text-slate-500">Penghapusan data anggota dari Direktori & KTA Digital</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeDeleteMemberModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200/80 text-xs space-y-1">
+                <p class="text-slate-500">Anggota yang akan dihapus:</p>
+                <p id="delMemberNameDisplay" class="font-display font-bold text-sm text-navy-900">-</p>
+                <p id="delMemberMetaDisplay" class="font-mono text-[11px] text-rose-700">-</p>
+            </div>
+
+            <form onsubmit="confirmDeleteMember(event)" class="space-y-3 text-xs sm:text-sm">
+                <input type="hidden" id="delMemberNpaHidden">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Alasan Penghapusan Keanggotaan</label>
+                    <select id="delMemberReasonSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-rose-600">
+                        <option value="Mutasi / Pindah Tugas Luar Daerah">Mutasi / Pindah Tugas Luar Daerah</option>
+                        <option value="Purna Tugas / Pensiun">Purna Tugas / Pensiun</option>
+                        <option value="Meninggal Dunia">Meninggal Dunia</option>
+                        <option value="Berhenti Atas Permintaan Sendiri">Berhenti Atas Permintaan Sendiri</option>
+                        <option value="Data Ganda / Koreksi Administrasi">Data Ganda / Koreksi Administrasi</option>
+                    </select>
+                </div>
+                <div class="pt-2 flex items-center justify-end gap-2">
+                    <button type="button" onclick="closeDeleteMemberModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">Batal</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow flex items-center gap-1.5">
+                        <i class="fa-solid fa-trash-can"></i> Ya, Hapus Anggota
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 2: FORM TAMBAH / PEMUTAKHIRAN ANGGOTA                             -->
+    <!-- ======================================================================= -->
+    <div id="modalAnggota" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h4 id="modalAnggotaTitle" class="font-display font-bold text-base text-navy-900">Formulir Pendaftaran & Pemutakhiran Anggota</h4>
+                <button type="button" onclick="closeModalAnggota()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="formTambahAnggota" onsubmit="saveNewMember(event)" class="space-y-3 text-xs sm:text-sm">
+                <input type="hidden" id="memberEditOriginalNpa" value="">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">NPA PGRI</label>
+                        <input type="text" id="inpNpa" required placeholder="Contoh: 250501009" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">NIP / NI PPPK / NUPTK</label>
+                        <input type="text" id="inpNip" required placeholder="1985xxxx / NUPTK" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Nama Lengkap & Gelar</label>
+                    <input type="text" id="inpNama" required placeholder="Contoh: Siti Nurhaliza, S.Pd., M.Pd." class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Satuan Kerja Madrasah (Ketik Manual)</label>
+                        <input type="text" id="inpSatker" list="satkerSuggestionsList" required placeholder="Ketik nama madrasah/satker..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-navy-900">
+                        <datalist id="satkerSuggestionsList">
+                            <option value="MIN 1 Gorontalo Utara"></option>
+                            <option value="MTsN 1 Gorontalo Utara"></option>
+                            <option value="MAN 1 Gorontalo Utara"></option>
+                            <option value="MTs Al-Khairaat Kwandang"></option>
+                            <option value="MA Al-Khairaat Gentuma"></option>
+                            <option value="MI Muhammadiyah Tolinggula"></option>
+                            <option value="MIS Al-Hidayah Tolinggula"></option>
+                            <option value="MA Monano"></option>
+                            <option value="RA Perwanida Kwandang"></option>
+                            <option value="Pokjawas Kemenag Gorut"></option>
+                        </datalist>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Jenjang Satker</label>
+                        <select id="inpJenjang" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white">
+                            <option value="MI">Madrasah Ibtidaiyah (MI)</option>
+                            <option value="MTs">Madrasah Tsanawiyah (MTs)</option>
+                            <option value="MA">Madrasah Aliyah (MA)</option>
+                            <option value="RA">Raudhatul Athfal (RA)</option>
+                            <option value="Pengawas">Pengawas Madrasah/PAI</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Status Kepegawaian</label>
+                        <select id="inpStatusPegawai" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white">
+                            <option value="PNS">PNS</option>
+                            <option value="PPPK">PPPK</option>
+                            <option value="Non-ASN Sertifikasi">Non-ASN Sertifikasi</option>
+                            <option value="Guru Honorer">Guru Honorer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Status Iuran Bulan Ini</label>
+                        <select id="inpStatusIuran" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white">
+                            <option value="Lunas">Lunas</option>
+                            <option value="Menunggak">Menunggak</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Jabatan di PGRI / Profesi</label>
+                    <input type="text" id="inpJabatan" value="Anggota Aktif / Guru Madrasah" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                </div>
+
+                <div class="pt-3 flex justify-end gap-2">
+                    <button type="button" onclick="closeModalAnggota()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-semibold">Batal</button>
+                    <button type="submit" id="btnSubmitAnggotaForm" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow">Simpan ke Database</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 3: FORM CATAT / EDIT TRANSAKSI IURAN & KAS                        -->
+    <!-- ======================================================================= -->
+    <div id="modalTransaksi" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h4 id="modalTransaksiTitle" class="font-display font-bold text-base text-navy-900">Catat Setoran Iuran / Kas Organisasi</h4>
+                <button type="button" onclick="closeModalTransaksi()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="formTransaksi" onsubmit="saveNewTransaction(event)" class="space-y-3 text-xs sm:text-sm">
+                <input type="hidden" id="trxEditIndex" value="-1">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Nama Anggota / Ranting Satker</label>
+                    <input type="text" id="trxNama" required placeholder="Contoh: Kolektif Ranting MTsN 1 Gorut" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Periode Bulan</label>
+                        <input type="text" id="trxBulan" required value="Mei 2025" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Jenis Arus Kas</label>
+                        <select id="trxKategori" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white">
+                            <option value="Iuran Masuk">Iuran Masuk (+)</option>
+                            <option value="Dana keluar">Pengeluaran Kas (-)</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Nominal (Rp)</label>
+                    <input type="number" id="trxNominal" required placeholder="Contoh: 250000" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModalTransaksi()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold">Batal</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl navy-crystal text-gold-300 font-bold">Simpan Transaksi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 10: KONFIRMASI HAPUS TRANSAKSI SETORAN / KAS                      -->
+    <!-- ======================================================================= -->
+    <div id="deleteTransaksiModal" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-rose-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-display font-bold text-base text-navy-900">Hapus Laporan Setoran / Kas</h4>
+                        <p class="text-[11px] text-slate-500">Data transaksi ini akan dihapus dari jurnal kas</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeDeleteTransaksiModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200/80 text-xs space-y-1">
+                <p id="delTrxIdDisplay" class="font-mono font-bold text-rose-700 uppercase">-</p>
+                <p id="delTrxNamaDisplay" class="font-display font-bold text-sm text-navy-900">-</p>
+                <p id="delTrxNominalDisplay" class="font-mono font-semibold text-xs text-slate-600">-</p>
+            </div>
+
+            <input type="hidden" id="delTrxIndexHidden" value="-1">
+            <div class="pt-1 flex items-center justify-end gap-2">
+                <button type="button" onclick="closeDeleteTransaksiModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">Batal</button>
+                <button type="button" onclick="confirmDeleteTransaction()" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow flex items-center gap-1.5">
+                    <i class="fa-solid fa-trash-can"></i> Ya, Hapus Setoran
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 4: KONFIGURASI URL GOOGLE APPS SCRIPT (BACKEND CLOUD)             -->
+    <!-- ======================================================================= -->
+    <div id="configModal" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <h4 class="font-display font-bold text-base text-navy-900">Integrasi Cloud Google Sheets (GAS API)</h4>
+                    <p class="text-xs text-slate-500">Hubungkan aplikasi HTML5 ini dengan Web App URL dari Google Apps Script Anda.</p>
+                </div>
+                <button type="button" onclick="closeConfigModal()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 text-xs sm:text-sm">
+                <label class="block font-semibold text-slate-700">URL Web App Google Apps Script (`https://script.google.com/macros/s/.../exec`)</label>
+                <input type="url" id="gasUrlInput" placeholder="Tempelkan URL Web App hasil Deploy Code.gs di sini..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-navy-900">
+                <p class="text-[11px] text-slate-500 leading-relaxed">
+                    *Jika dikosongkan, aplikasi tetap berjalan 100% normal menggunakan penyimpanan lokal (<code class="text-navy-900 font-semibold">localStorage</code>). Jika diisi, setiap input anggota, iuran, dan aspirasi akan langsung dikirim ke Google Sheets.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100">
+                <div class="flex flex-wrap gap-1.5">
+                    <button type="button" onclick="syncFromCloud()" class="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-cloud-arrow-down"></i> Tarik dari Sheets
+                    </button>
+                    <button type="button" onclick="pushAllStateToCloud()" class="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Kirim Semua Data ke Sheets
+                    </button>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" onclick="closeConfigModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-semibold text-slate-600">Tutup</button>
+                    <button type="button" onclick="saveGasUrlConfig()" class="px-5 py-2 rounded-xl navy-crystal text-gold-300 text-xs font-bold">Simpan Koneksi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 5: TAMBAH / EDIT PENGURUS ORGANISASI                              -->
+    <!-- ======================================================================= -->
+    <div id="modalPengurus" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h4 id="modalPengurusTitle" class="font-display font-bold text-base text-navy-900">Tambah Struktur Pengurus Cabang Khusus</h4>
+                <button type="button" onclick="closeModalTambahPengurus()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="formTambahPengurus" onsubmit="saveNewPengurus(event)" class="space-y-3 text-xs sm:text-sm">
+                <input type="hidden" id="pengEditIndex" value="-1">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Jabatan Kepengurusan</label>
+                    <input type="text" id="pengJabatan" required placeholder="Contoh: Ketua Bidang PKB / Sekretaris" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Nama Lengkap & Gelar</label>
+                    <input type="text" id="pengNama" required placeholder="Contoh: Drs. H. Mahmud Yunus, M.Pd." class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Asal Satker / Instansi</label>
+                    <input type="text" id="pengSatker" required placeholder="Contoh: MAN 1 Gorontalo Utara" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Kelompok Hirarki</label>
+                    <select id="pengLevel" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white">
+                        <option value="Dewan Pembina">Dewan Pembina / Penasihat</option>
+                        <option value="Pengurus Harian">Pengurus Harian Inti</option>
+                        <option value="Ketua Seksi / Bidang">Ketua Seksi / Bidang</option>
+                    </select>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModalTambahPengurus()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold">Batal</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl gold-gradient text-navy-950 font-bold">Simpan Pengurus</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 7: KONFIRMASI HAPUS PENGURUS ORGANISASI                           -->
+    <!-- ======================================================================= -->
+    <div id="deletePengurusModal" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-rose-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
+                        <i class="fa-solid fa-user-minus"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-display font-bold text-base text-navy-900">Hapus Pengurus Terdaftar</h4>
+                        <p class="text-[11px] text-slate-500">Hapus untuk digantikan atau disesuaikan dalam struktur</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeDeletePengurusModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200/80 text-xs space-y-1">
+                <p id="delPengurusJabatanDisplay" class="font-bold text-emerald-700 uppercase">-</p>
+                <p id="delPengurusNamaDisplay" class="font-display font-bold text-sm text-navy-900">-</p>
+                <p id="delPengurusSatkerDisplay" class="text-[11px] text-slate-500">-</p>
+            </div>
+
+            <input type="hidden" id="delPengurusIndexHidden" value="-1">
+            <div class="pt-1 flex items-center justify-end gap-2">
+                <button type="button" onclick="closeDeletePengurusModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">Batal</button>
+                <button type="button" onclick="confirmDeletePengurus()" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow flex items-center gap-1.5">
+                    <i class="fa-solid fa-trash-can"></i> Ya, Hapus Pengurus
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 8: TAMBAH / EDIT BAB & PASAL DOKUMEN AD/ART                       -->
+    <!-- ======================================================================= -->
+    <div id="modalAdArt" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h4 id="modalAdArtTitle" class="font-display font-bold text-base text-navy-900">Tambah / Edit Dokumen AD/ART</h4>
+                <button type="button" onclick="closeModalAdArt()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="formAdArt" onsubmit="saveAdArtItem(event)" class="space-y-3 text-xs sm:text-sm">
+                <input type="hidden" id="adArtEditIndex" value="-1">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Judul Bab / Bagian</label>
+                    <input type="text" id="adArtBabInput" required placeholder="Contoh: BAB VI : PERANGKAT DAN KELENGKAPAN ORGANISASI" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-navy-900">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Keterangan Pasal / Sumber Dokumen</label>
+                    <input type="text" id="adArtPasalInput" required placeholder="Contoh: Pasal 30 – Pasal 35 Anggaran Dasar PGRI" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-navy-900">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Isi Lengkap Pasal / Ketentuan AD/ART</label>
+                    <textarea id="adArtIsiInput" rows="6" required placeholder="Tuliskan atau sunting isi lengkap ketentuan AD/ART di sini..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-navy-900 leading-relaxed"></textarea>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModalAdArt()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-semibold">Batal</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl navy-crystal text-gold-300 font-bold shadow">Simpan Dokumen AD/ART</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 9: KONFIRMASI HAPUS BAB / PASAL AD/ART                            -->
+    <!-- ======================================================================= -->
+    <div id="deleteAdArtModal" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-rose-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
+                        <i class="fa-solid fa-file-circle-xmark"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-display font-bold text-base text-navy-900">Hapus Bagian Dokumen AD/ART</h4>
+                        <p class="text-[11px] text-slate-500">Bagian ini akan dihapus dari daftar AD/ART</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeDeleteAdArtModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200/80 text-xs space-y-1">
+                <p id="delAdArtPasalDisplay" class="font-bold text-emerald-700 uppercase">-</p>
+                <p id="delAdArtBabDisplay" class="font-display font-bold text-sm text-navy-900">-</p>
+            </div>
+
+            <input type="hidden" id="delAdArtIndexHidden" value="-1">
+            <div class="pt-1 flex items-center justify-end gap-2">
+                <button type="button" onclick="closeDeleteAdArtModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">Batal</button>
+                <button type="button" onclick="confirmDeleteAdArt()" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow flex items-center gap-1.5">
+                    <i class="fa-solid fa-trash-can"></i> Ya, Hapus Bagian Ini
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 13: INPUT DATA MANDIRI ANGGOTA (MENUNGGU VERIFIKASI ADMIN)        -->
+    <!-- ======================================================================= -->
+    <div id="selfRegisterModal" class="fixed inset-0 z-[70] hidden bg-navy-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gold-500/40 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block">Layanan Pendaftaran & Pemutakhiran Mandiri</span>
+                    <h4 class="font-display font-bold text-base text-navy-900">Input Data Anggota PGRI</h4>
+                </div>
+                <button type="button" onclick="closeModalSelfRegister()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed">
+                <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i>
+                Data yang Anda kirimkan akan masuk ke <strong>Menu Verifikasi Admin</strong>. Setelah disetujui oleh Admin Pengurus, Anda resmi terdaftar dan dapat mengakses seluruh fitur Portal Anggota.
+            </div>
+
+            <form id="formSelfRegister" onsubmit="submitSelfRegistration(event)" class="space-y-3 text-xs sm:text-sm">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">NPA PGRI (Kosongkan jika belum ada)</label>
+                        <input type="text" id="selfInpNpa" placeholder="Otomatis jika dikosongkan" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">NIP / NIK / NUPTK *</label>
+                        <input type="text" id="selfInpNip" required placeholder="Masukkan NIP atau NIK 16 digit" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Nama Lengkap & Gelar *</label>
+                    <input type="text" id="selfInpNama" required placeholder="Contoh: Siti Nurhaliza, S.Pd.I." class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Satuan Kerja Madrasah *</label>
+                        <input type="text" id="selfInpSatker" list="satkerSuggestionsList" required placeholder="Ketik nama madrasah..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Jenjang Satker *</label>
+                        <select id="selfInpJenjang" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white">
+                            <option value="MI">Madrasah Ibtidaiyah (MI)</option>
+                            <option value="MTs">Madrasah Tsanawiyah (MTs)</option>
+                            <option value="MA">Madrasah Aliyah (MA)</option>
+                            <option value="RA">Raudhatul Athfal (RA)</option>
+                            <option value="Pengawas">Pengawas Madrasah/PAI</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Status Kepegawaian *</label>
+                        <select id="selfInpStatusPegawai" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white">
+                            <option value="PNS">PNS</option>
+                            <option value="PPPK">PPPK</option>
+                            <option value="Non-ASN Sertifikasi">Non-ASN Sertifikasi</option>
+                            <option value="Guru Honorer">Guru Honorer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Jabatan / Tugas</label>
+                        <input type="text" id="selfInpJabatan" value="Anggota Aktif / Guru Madrasah" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                    </div>
+                </div>
+
+                <div class="pt-3 flex justify-end gap-2">
+                    <button type="button" onclick="closeModalSelfRegister()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-semibold">Batal</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow flex items-center gap-1.5">
+                        <i class="fa-solid fa-paper-plane"></i> Kirim untuk Diverifikasi Admin
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 14: INPUT / EDIT SURAT KESEKRETARIATAN VIA LINK GOOGLE DRIVE      -->
+    <!-- ======================================================================= -->
+    <div id="suratModal" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h4 id="modalSuratTitle" class="font-display font-bold text-base text-navy-900">Input Dokumen Surat Kesekretariatan</h4>
+                <button type="button" onclick="closeModalSurat()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="formSurat" onsubmit="saveSuratItem(event)" class="space-y-3 text-xs sm:text-sm">
+                <input type="hidden" id="suratEditIndex" value="-1">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Nomor Surat *</label>
+                        <input type="text" id="suratNomor" required placeholder="Contoh: 012/PGRI-KEMENAG/V/2025" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Tanggal Surat *</label>
+                        <input type="date" id="suratTanggal" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Kategori Dokumen Surat *</label>
+                        <select id="suratJenis" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-white">
+                            <option value="Surat Masuk">Surat Masuk</option>
+                            <option value="Surat Keluar">Surat Keluar</option>
+                            <option value="Surat Keputusan (SK)">Surat Keputusan (SK)</option>
+                            <option value="Surat Edaran / Undangan">Surat Edaran / Undangan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Pengirim / Tujuan Surat *</label>
+                        <input type="text" id="suratPengirim" required placeholder="Contoh: Kankemenag Gorut / Seluruh Ranting" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Perihal / Nama File Surat *</label>
+                    <input type="text" id="suratPerihal" required placeholder="Contoh: Undangan Rapat Koordinasi Pengurus Cabang Khusus" class="w-full px-3.5 py-2 rounded-xl border border-slate-200">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Link File Surat Google Drive *</label>
+                    <input type="url" id="suratDriveUrl" required placeholder="https://drive.google.com/file/d/ID_FILE_SURAT/view?usp=sharing" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-navy-900">
+                    <span class="text-[11px] text-slate-400 mt-1 block">Tempelkan link berbagi file PDF/Dokumen dari Google Drive. Sistem otomatis menampilkannya di pratinjau aplikasi.</span>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModalSurat()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-semibold">Batal</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl navy-crystal text-gold-300 font-bold shadow">Simpan Dokumen Surat</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- MODAL 15: KONFIRMASI HAPUS SURAT KESEKRETARIATAN                        -->
+    <!-- ======================================================================= -->
+    <div id="deleteSuratModal" class="fixed inset-0 z-50 hidden bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-rose-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-display font-bold text-base text-navy-900">Hapus Arsip Surat</h4>
+                        <p class="text-[11px] text-slate-500">Arsip surat ini akan dihapus dari daftar kesekretariatan</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeDeleteSuratModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200/80 text-xs space-y-1">
+                <p id="delSuratNomorDisplay" class="font-mono font-bold text-rose-700 uppercase">-</p>
+                <p id="delSuratPerihalDisplay" class="font-display font-bold text-sm text-navy-900">-</p>
+            </div>
+
+            <input type="hidden" id="delSuratIndexHidden" value="-1">
+            <div class="pt-1 flex items-center justify-end gap-2">
+                <button type="button" onclick="closeDeleteSuratModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">Batal</button>
+                <button type="button" onclick="confirmDeleteSurat()" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow flex items-center gap-1.5">
+                    <i class="fa-solid fa-trash-can"></i> Ya, Hapus Surat
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- ======================================================================= -->
     <!-- MODAL 11: TAMBAH / EDIT KEGIATAN PKB                                    -->
@@ -1667,11 +2487,13 @@
                 signatoryNip: 'NIP. 197804122005011004'
             },
             anggota: [],
+            pendingAnggota: [],
             pengurus: [],
             adArt: [],
             keuangan: [],
             pkb: [],
-            aspirasi: []
+            aspirasi: [],
+            kesekretariatan: []
         };
         /*__SIMIRA_EMBEDDED_DATA_END__*/
 
@@ -1729,6 +2551,8 @@
             if (!appState.settings) {
                 appState.settings = JSON.parse(JSON.stringify(INITIAL_DATA.settings));
             }
+            if (!Array.isArray(appState.pendingAnggota)) appState.pendingAnggota = [];
+            if (!Array.isArray(appState.kesekretariatan)) appState.kesekretariatan = [];
             // Pastikan field penanda tangan tersedia
             if (!appState.settings.signatoryCity) appState.settings.signatoryCity = INITIAL_DATA.settings.signatoryCity;
             if (!appState.settings.signatoryTitle) appState.settings.signatoryTitle = INITIAL_DATA.settings.signatoryTitle;
@@ -1784,6 +2608,7 @@
                 passBox.classList.remove('hidden');
                 inpPass.required = true;
                 helper.textContent = 'Masuk sebagai Admin untuk mengelola seluruh basis data, kas, AD/ART, dan pengaturan sistem.';
+                document.getElementById('memberSelfRegisterBox')?.classList.add('hidden');
             } else {
                 btnMember.className = 'py-2 px-3 rounded-lg bg-emerald-700 text-white font-bold text-xs shadow-sm transition flex items-center justify-center gap-1.5';
                 btnAdmin.className = 'py-2 px-3 rounded-lg text-slate-600 hover:text-navy-900 font-semibold text-xs transition flex items-center justify-center gap-1.5';
@@ -1792,7 +2617,8 @@
                 inpUser.value = '';
                 passBox.classList.add('hidden');
                 inpPass.required = false;
-                helper.textContent = 'Anggota cukup memasukkan NPA, NIP/NIK, atau Nama Lengkap untuk mengakses Portal Mandiri.';
+                helper.textContent = 'Masukkan NPA/NIP/Nama jika sudah disetujui Admin, atau klik tombol Input Data Mandiri di bawah.';
+                document.getElementById('memberSelfRegisterBox')?.classList.remove('hidden');
             }
         }
 
@@ -1817,10 +2643,17 @@
                 );
 
                 if (!foundMember) {
+                    const isPending = (appState.pendingAnggota || []).some(p =>
+                        String(p.npa).toLowerCase() === userInp.toLowerCase() ||
+                        String(p.nip).toLowerCase() === userInp.toLowerCase() ||
+                        p.nama.toLowerCase().includes(userInp.toLowerCase())
+                    );
                     const alertBox = document.getElementById('loginAlertBox');
                     const alertText = document.getElementById('loginAlertText');
-                    alertBox.className = 'p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2.5';
-                    alertText.textContent = 'Data anggota tidak ditemukan. Pastikan NPA, NIP/NIK, atau Nama Anda sudah terdaftar di Direktori Anggota.';
+                    alertBox.className = 'p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-semibold flex items-center gap-2.5';
+                    alertText.textContent = isPending
+                        ? 'Data Anda sedang dalam antrean verifikasi Admin. Anda dapat masuk setelah Admin menyetujui pendaftaran Anda.'
+                        : 'Data belum terdaftar. Silakan klik tombol "Input Data Mandiri / Daftar Anggota Baru" di bawah untuk mendaftar.';
                     return;
                 }
 
@@ -2190,10 +3023,12 @@
             renderStrukturOrganisasi();
             renderAdArtList();
             updateSatkerFilterOptions();
+            renderPendingVerificationTable();
             renderMembersTable();
             renderFinanceView();
             renderPkbGrid();
             renderAspirasiList();
+            renderSuratList();
         }
 
         function updateSatkerFilterOptions() {
@@ -2232,15 +3067,16 @@
             keuangan: { title: 'Transparansi Kas & Kartu Kendali Iuran', subtitle: 'Layanan Cek Status Iuran Mandiri dan Laporan Akuntabilitas Kas Ranting' },
             pkb: { title: 'Pengembangan Keprofesian (PKB)', subtitle: 'Pendaftaran Kegiatan Diklat, Workshop Madrasah, dan Unduh E-Sertifikat' },
             advokasi: { title: 'Layanan Advokasi, Solidaritas & Aspirasi', subtitle: 'Perlindungan Profesi Guru, Konsultasi Administrasi, dan Dana Sosial' },
+            kesekretariatan: { title: 'Kesekretariatan & Arsip Surat Digital', subtitle: 'Manajemen Dokumen Surat Masuk, Surat Keluar, dan SK via Link Google Drive' },
             pengaturan: { title: 'Pengaturan Sistem & Kustomisasi', subtitle: 'Kelola Tema Warna, Ukuran Huruf, Logo via Google Drive, serta Username & Sandi Login' }
         };
 
         function switchTab(tabId) {
-            if (currentUserRole === 'MEMBER' && tabId === 'pengaturan') {
-                showToast('Menu Pengaturan Sistem hanya dapat diakses oleh Admin Pengurus.', 'gold');
+            if (currentUserRole === 'MEMBER' && (tabId === 'pengaturan' || tabId === 'kesekretariatan')) {
+                showToast('Menu ini hanya dapat diakses oleh Admin Pengurus.', 'gold');
                 return;
             }
-            const tabs = ['dashboard', 'informasi', 'anggota', 'keuangan', 'pkb', 'advokasi', 'pengaturan'];
+            const tabs = ['dashboard', 'informasi', 'anggota', 'keuangan', 'pkb', 'advokasi', 'kesekretariatan', 'pengaturan'];
             tabs.forEach(t => {
                 const viewEl = document.getElementById(`view-${t}`);
                 if (viewEl) viewEl.classList.add('hidden');
@@ -2831,6 +3667,330 @@
             postToGoogleSheets('DELETE_ANGGOTA', { npa: removedMember.npa, nama: removedMember.nama, alasan: reason });
             closeDeleteMemberModal();
             showToast(`Anggota ${removedMember.nama} telah dihapus (${reason}).`, 'gold');
+        }
+
+        // ==================== LOGIKA PENDAFTARAN MANDIRI ANGGOTA & VERIFIKASI ADMIN ====================
+        function openModalSelfRegister(prefillCurrent = false) {
+            const form = document.getElementById('formSelfRegister');
+            if (form) form.reset();
+            if (prefillCurrent && currentLoggedMember) {
+                document.getElementById('selfInpNpa').value = currentLoggedMember.npa || '';
+                document.getElementById('selfInpNip').value = currentLoggedMember.nip || '';
+                document.getElementById('selfInpNama').value = currentLoggedMember.nama || '';
+                document.getElementById('selfInpSatker').value = currentLoggedMember.satker || '';
+                document.getElementById('selfInpJenjang').value = currentLoggedMember.jenjang || 'MTs';
+                document.getElementById('selfInpStatusPegawai').value = currentLoggedMember.statusPegawai || 'PNS';
+                document.getElementById('selfInpJabatan').value = currentLoggedMember.jabatan || 'Anggota Aktif';
+            }
+            document.getElementById('selfRegisterModal').classList.remove('hidden');
+        }
+
+        function closeModalSelfRegister() {
+            document.getElementById('selfRegisterModal').classList.add('hidden');
+        }
+
+        function submitSelfRegistration(e) {
+            e.preventDefault();
+            if (!Array.isArray(appState.pendingAnggota)) appState.pendingAnggota = [];
+
+            const nextSeq = appState.anggota.length + appState.pendingAnggota.length + 1;
+            const autoNpa = '750501' + String(nextSeq).padStart(3, '0');
+            const inputNpa = document.getElementById('selfInpNpa').value.trim() || autoNpa;
+
+            const submission = {
+                idPengajuan: 'REG-' + Math.floor(1000 + Math.random() * 9000),
+                waktu: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+                npa: inputNpa,
+                nip: document.getElementById('selfInpNip').value.trim(),
+                nama: document.getElementById('selfInpNama').value.trim(),
+                satker: document.getElementById('selfInpSatker').value.trim(),
+                jenjang: document.getElementById('selfInpJenjang').value,
+                statusPegawai: document.getElementById('selfInpStatusPegawai').value,
+                statusIuran: 'Lunas',
+                jabatan: document.getElementById('selfInpJabatan').value.trim() || 'Anggota Aktif'
+            };
+
+            appState.pendingAnggota.unshift(submission);
+            saveState();
+            renderPendingVerificationTable();
+            postToGoogleSheets('SYNC_ALL', appState);
+            closeModalSelfRegister();
+
+            const alertBox = document.getElementById('loginAlertBox');
+            const alertText = document.getElementById('loginAlertText');
+            if (alertBox && alertText) {
+                alertBox.className = 'p-3.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-semibold flex items-center gap-2.5';
+                alertText.textContent = `Pengajuan data a.n. ${submission.nama} (NPA: ${submission.npa}) berhasil dikirim ke Admin untuk diverifikasi!`;
+            }
+            showToast(`Data ${submission.nama} berhasil dikirim dan menunggu verifikasi Admin!`, 'emerald');
+        }
+
+        function renderPendingVerificationTable() {
+            const tbody = document.getElementById('pendingMembersTableBody');
+            const badge = document.getElementById('pendingCountBadge');
+            if (!tbody) return;
+
+            const list = appState.pendingAnggota || [];
+            if (badge) {
+                badge.textContent = `${list.length} Menunggu`;
+                badge.className = list.length > 0
+                    ? 'px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-rose-600 text-white animate-pulse'
+                    : 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700';
+            }
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-5 text-center text-slate-400 text-xs">Tidak ada antrean pengajuan verifikasi anggota saat ini.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map((item, idx) => `
+                <tr class="hover:bg-amber-50/40 transition">
+                    <td class="py-3 px-3">
+                        <span class="font-mono font-bold text-amber-700 block">${item.idPengajuan || 'REG'}</span>
+                        <span class="text-[11px] text-slate-400">${item.waktu || '-'}</span>
+                    </td>
+                    <td class="py-3 px-3">
+                        <span class="font-mono font-bold text-navy-900 block">${item.npa}</span>
+                        <span class="font-mono text-[11px] text-slate-500">${item.nip}</span>
+                    </td>
+                    <td class="py-3 px-3">
+                        <p class="font-bold text-navy-900">${item.nama}</p>
+                        <p class="text-[11px] text-slate-500">${item.jabatan}</p>
+                    </td>
+                    <td class="py-3 px-3">
+                        <span class="font-semibold text-slate-700">${item.satker}</span>
+                        <span class="block text-[10px] font-bold text-emerald-600 uppercase">Jenjang ${item.jenjang}</span>
+                    </td>
+                    <td class="py-3 px-3">
+                        <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-navy-900">${item.statusPegawai}</span>
+                    </td>
+                    <td class="py-3 px-3 text-center">
+                        <div class="inline-flex items-center gap-1.5">
+                            <button type="button" onclick="approvePendingMember(${idx})" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm inline-flex items-center gap-1 transition">
+                                <i class="fa-solid fa-check"></i> Setujui & Aktifkan
+                            </button>
+                            <button type="button" onclick="rejectPendingMember(${idx})" class="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold inline-flex items-center gap-1 transition">
+                                <i class="fa-solid fa-xmark"></i> Tolak
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function approvePendingMember(index) {
+            const item = appState.pendingAnggota[index];
+            if (!item) return;
+
+            const approvedMember = {
+                npa: item.npa,
+                nip: item.nip,
+                nama: item.nama,
+                satker: item.satker,
+                jenjang: item.jenjang,
+                statusPegawai: item.statusPegawai,
+                statusIuran: item.statusIuran || 'Lunas',
+                jabatan: item.jabatan || 'Anggota Aktif'
+            };
+
+            const existingIdx = appState.anggota.findIndex(a =>
+                String(a.npa).trim() === String(approvedMember.npa).trim() ||
+                String(a.nip).trim() === String(approvedMember.nip).trim()
+            );
+
+            if (existingIdx !== -1) {
+                appState.anggota[existingIdx] = approvedMember;
+            } else {
+                appState.anggota.unshift(approvedMember);
+            }
+
+            appState.pendingAnggota.splice(index, 1);
+            saveState();
+            refreshAllViews();
+            postToGoogleSheets('ADD_ANGGOTA', approvedMember);
+            postToGoogleSheets('SYNC_ALL', appState);
+            showToast(`Disetujui! ${approvedMember.nama} resmi terdaftar dan dapat mengakses semua fitur.`, 'emerald');
+        }
+
+        function rejectPendingMember(index) {
+            const item = appState.pendingAnggota[index];
+            if (!item) return;
+            appState.pendingAnggota.splice(index, 1);
+            saveState();
+            renderPendingVerificationTable();
+            postToGoogleSheets('SYNC_ALL', appState);
+            showToast(`Pengajuan anggota a.n. ${item.nama} telah ditolak/dihapus.`, 'gold');
+        }
+
+        // ==================== LOGIKA MODUL KESEKRETARIATAN (SURAT GOOGLE DRIVE) ====================
+        function getDriveEmbedPreviewUrl(rawUrl) {
+            if (!rawUrl) return '';
+            const fileId = extractDriveFileId(rawUrl);
+            if (fileId) {
+                return `https://drive.google.com/file/d/${fileId}/preview`;
+            }
+            return rawUrl;
+        }
+
+        function renderSuratList() {
+            const tbody = document.getElementById('kesekretariatanTableBody');
+            if (!tbody) return;
+
+            const q = (document.getElementById('searchSuratInput')?.value || '').toLowerCase();
+            const jenisFilter = document.getElementById('filterJenisSurat')?.value || 'ALL';
+
+            const indexed = (appState.kesekretariatan || []).map((s, originalIdx) => ({ ...s, originalIdx }));
+            const filtered = indexed.filter(s => {
+                const matchQ = (s.nomor || '').toLowerCase().includes(q) ||
+                               (s.perihal || '').toLowerCase().includes(q) ||
+                               (s.pengirim || '').toLowerCase().includes(q);
+                const matchJenis = jenisFilter === 'ALL' || s.jenis === jenisFilter;
+                return matchQ && matchJenis;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-400 text-sm">Belum ada arsip surat di Kesekretariatan. Klik tombol <strong>+ Input File Surat (Link Drive)</strong> di atas.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(s => {
+                const badgeColor = s.jenis === 'Surat Masuk'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : s.jenis === 'Surat Keluar'
+                        ? 'bg-navy-900/10 text-navy-900 border-slate-300'
+                        : 'bg-gold-100 text-gold-600 border-gold-300';
+
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3.5 px-4">
+                            <span class="font-mono font-bold text-navy-900 block">${s.nomor}</span>
+                            <span class="text-[11px] text-slate-400">${s.tanggal}</span>
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold border ${badgeColor}">${s.jenis}</span>
+                        </td>
+                        <td class="py-3.5 px-4 font-semibold text-navy-900">${s.perihal}</td>
+                        <td class="py-3.5 px-4 text-slate-600">${s.pengirim}</td>
+                        <td class="py-3.5 px-4 text-center">
+                            <div class="inline-flex flex-wrap items-center justify-center gap-1.5">
+                                <button type="button" onclick="previewSuratDrive(${s.originalIdx})" class="px-3 py-1.5 rounded-xl navy-crystal text-gold-300 hover:opacity-90 text-xs font-semibold shadow-sm inline-flex items-center gap-1.5">
+                                    <i class="fa-brands fa-google-drive"></i> Lihat Surat
+                                </button>
+                                <button type="button" onclick="openEditSuratModal(${s.originalIdx})" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-navy-900 border border-slate-200 text-xs font-semibold inline-flex items-center gap-1 transition">
+                                    <i class="fa-solid fa-pen-to-square text-emerald-600"></i> Edit
+                                </button>
+                                <button type="button" onclick="openDeleteSuratModal(${s.originalIdx})" class="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold inline-flex items-center gap-1 transition">
+                                    <i class="fa-solid fa-trash-can"></i> Hapus
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openModalTambahSurat() {
+            document.getElementById('suratEditIndex').value = '-1';
+            document.getElementById('modalSuratTitle').textContent = 'Input File Surat Baru via Link Google Drive';
+            document.getElementById('formSurat').reset();
+            document.getElementById('suratTanggal').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('suratModal').classList.remove('hidden');
+        }
+
+        function openEditSuratModal(index) {
+            const s = appState.kesekretariatan[index];
+            if (!s) return;
+            document.getElementById('suratEditIndex').value = index;
+            document.getElementById('modalSuratTitle').textContent = `Edit Dokumen Surat (${s.nomor})`;
+            document.getElementById('suratNomor').value = s.nomor;
+            document.getElementById('suratTanggal').value = s.tanggal;
+            document.getElementById('suratJenis').value = s.jenis;
+            document.getElementById('suratPengirim').value = s.pengirim;
+            document.getElementById('suratPerihal').value = s.perihal;
+            document.getElementById('suratDriveUrl').value = s.driveUrl;
+            document.getElementById('suratModal').classList.remove('hidden');
+        }
+
+        function closeModalSurat() {
+            document.getElementById('suratModal').classList.add('hidden');
+        }
+
+        function saveSuratItem(e) {
+            e.preventDefault();
+            if (!Array.isArray(appState.kesekretariatan)) appState.kesekretariatan = [];
+            const editIdx = Number(document.getElementById('suratEditIndex').value);
+
+            const item = {
+                id: editIdx >= 0 && appState.kesekretariatan[editIdx] ? appState.kesekretariatan[editIdx].id : 'SRT-' + Math.floor(100 + Math.random() * 900),
+                nomor: document.getElementById('suratNomor').value.trim(),
+                tanggal: document.getElementById('suratTanggal').value,
+                jenis: document.getElementById('suratJenis').value,
+                pengirim: document.getElementById('suratPengirim').value.trim(),
+                perihal: document.getElementById('suratPerihal').value.trim(),
+                driveUrl: document.getElementById('suratDriveUrl').value.trim()
+            };
+
+            if (editIdx >= 0 && appState.kesekretariatan[editIdx]) {
+                appState.kesekretariatan[editIdx] = item;
+                showToast(`Arsip surat "${item.perihal}" berhasil diperbarui!`, 'emerald');
+            } else {
+                appState.kesekretariatan.unshift(item);
+                showToast(`Arsip surat "${item.perihal}" berhasil ditambahkan!`, 'emerald');
+            }
+
+            saveState();
+            renderSuratList();
+            postToGoogleSheets('SYNC_ALL', appState);
+            closeModalSurat();
+        }
+
+        function previewSuratDrive(index) {
+            const s = appState.kesekretariatan[index];
+            if (!s) return;
+            const box = document.getElementById('suratDriveViewerBox');
+            const iframe = document.getElementById('suratDriveIframe');
+            const titleEl = document.getElementById('viewerSuratTitle');
+            const subEl = document.getElementById('viewerSuratSubtitle');
+            const extBtn = document.getElementById('viewerSuratExternalBtn');
+
+            titleEl.textContent = s.perihal;
+            subEl.textContent = `${s.jenis} • Nomor: ${s.nomor} • Tanggal: ${s.tanggal} • (${s.pengirim})`;
+            extBtn.href = s.driveUrl;
+            iframe.src = getDriveEmbedPreviewUrl(s.driveUrl);
+            box.classList.remove('hidden');
+            box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function closeSuratDriveViewer() {
+            const box = document.getElementById('suratDriveViewerBox');
+            const iframe = document.getElementById('suratDriveIframe');
+            if (iframe) iframe.src = '';
+            if (box) box.classList.add('hidden');
+        }
+
+        function openDeleteSuratModal(index) {
+            const s = appState.kesekretariatan[index];
+            if (!s) return;
+            document.getElementById('delSuratIndexHidden').value = index;
+            document.getElementById('delSuratNomorDisplay').textContent = `${s.jenis} • ${s.nomor}`;
+            document.getElementById('delSuratPerihalDisplay').textContent = s.perihal;
+            document.getElementById('deleteSuratModal').classList.remove('hidden');
+        }
+
+        function closeDeleteSuratModal() {
+            document.getElementById('deleteSuratModal').classList.add('hidden');
+        }
+
+        function confirmDeleteSurat() {
+            const idx = Number(document.getElementById('delSuratIndexHidden').value);
+            if (idx >= 0 && appState.kesekretariatan[idx]) {
+                const removed = appState.kesekretariatan.splice(idx, 1)[0];
+                saveState();
+                renderSuratList();
+                postToGoogleSheets('SYNC_ALL', appState);
+                showToast(`Arsip surat "${removed.perihal}" telah dihapus.`, 'gold');
+            }
+            closeDeleteSuratModal();
         }
 
         // ==================== LOGIKA IMPOR MASSAL ANGGOTA VIA PDF GOOGLE DRIVE ====================
@@ -3637,11 +4797,13 @@
                 const json = await res.json();
                 if (json && json.status === 'success') {
                     if (Array.isArray(json.data.anggota)) appState.anggota = json.data.anggota;
+                    if (Array.isArray(json.data.pendingAnggota)) appState.pendingAnggota = json.data.pendingAnggota;
                     if (Array.isArray(json.data.keuangan)) appState.keuangan = json.data.keuangan;
                     if (Array.isArray(json.data.aspirasi)) appState.aspirasi = json.data.aspirasi;
                     if (Array.isArray(json.data.pengurus)) appState.pengurus = json.data.pengurus;
                     if (Array.isArray(json.data.adArt)) appState.adArt = json.data.adArt;
                     if (Array.isArray(json.data.pkb)) appState.pkb = json.data.pkb;
+                    if (Array.isArray(json.data.kesekretariatan)) appState.kesekretariatan = json.data.kesekretariatan;
                     if (json.data.settings && Object.keys(json.data.settings).length > 0) {
                         appState.settings = { ...appState.settings, ...json.data.settings };
                     }
@@ -3936,6 +5098,34 @@
                                     <td style="border:1px solid #cbd5e1; padding:8px;">${item.kategori}</td>
                                     <td style="border:1px solid #cbd5e1; padding:8px;">${item.isi}</td>
                                     <td style="border:1px solid #cbd5e1; padding:8px; text-align:center;">${item.status}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else if (menuType === 'kesekretariatan') {
+                reportTitle = 'BUKU AGENDA & REKAPAN ARSIP SURAT KESEKRETARIATAN';
+                bodyHtml = `
+                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                        <thead>
+                            <tr style="background:#0A192F; color:#fff;">
+                                <th style="border:1px solid #cbd5e1; padding:8px;">No</th>
+                                <th style="border:1px solid #cbd5e1; padding:8px; text-align:left;">Nomor & Tanggal Surat</th>
+                                <th style="border:1px solid #cbd5e1; padding:8px; text-align:center;">Kategori</th>
+                                <th style="border:1px solid #cbd5e1; padding:8px; text-align:left;">Perihal / Nama Surat</th>
+                                <th style="border:1px solid #cbd5e1; padding:8px; text-align:left;">Pengirim / Tujuan</th>
+                                <th style="border:1px solid #cbd5e1; padding:8px; text-align:left;">Tautan Arsip Google Drive</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${(appState.kesekretariatan || []).map((s, i) => `
+                                <tr>
+                                    <td style="border:1px solid #cbd5e1; padding:8px; text-align:center;">${i + 1}</td>
+                                    <td style="border:1px solid #cbd5e1; padding:8px; font-family:monospace;">${s.nomor}<br><small>${s.tanggal}</small></td>
+                                    <td style="border:1px solid #cbd5e1; padding:8px; text-align:center;">${s.jenis}</td>
+                                    <td style="border:1px solid #cbd5e1; padding:8px; font-weight:bold;">${s.perihal}</td>
+                                    <td style="border:1px solid #cbd5e1; padding:8px;">${s.pengirim}</td>
+                                    <td style="border:1px solid #cbd5e1; padding:8px; font-size:10px; word-break:break-all;">${s.driveUrl}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
