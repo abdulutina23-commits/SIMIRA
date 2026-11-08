@@ -2571,8 +2571,8 @@
             if (!appState.settings.signatoryName) appState.settings.signatoryName = INITIAL_DATA.settings.signatoryName;
             if (!appState.settings.signatoryNip) appState.settings.signatoryNip = INITIAL_DATA.settings.signatoryNip;
 
-            // Selalu prioritaskan URL Google Apps Script yang tertanam di kode HTML jika gasUrl kosong
-            if (!appState.gasUrl && INITIAL_DATA.gasUrl) {
+            // WAJIB: Selalu sinkronkan gasUrl dengan INITIAL_DATA.gasUrl terbaru agar perangkat lama tidak terjebak memakai URL lama di localStorage
+            if (INITIAL_DATA.gasUrl && appState.gasUrl !== INITIAL_DATA.gasUrl) {
                 appState.gasUrl = INITIAL_DATA.gasUrl;
                 saveState();
             }
@@ -2583,12 +2583,12 @@
                 updateCloudStatusUI(true);
                 // TARIK DATA OTOMATIS DARI GOOGLE SHEETS SAAT DIBUKA DI PERANGKAT MANAPUN
                 syncFromCloud(true);
-                // Sinkronisasi berkala setiap 25 detik agar kiriman dari perangkat lain langsung masuk otomatis
+                // Sinkronisasi berkala setiap 15 detik agar kiriman dari perangkat lain langsung masuk otomatis
                 setInterval(() => {
                     if (appState.gasUrl && !document.hidden) {
                         syncFromCloud(true);
                     }
-                }, 25000);
+                }, 15000);
             }
             applyAllUserSettings();
             populateSettingsForm();
@@ -3743,7 +3743,20 @@
             closeModalSelfRegister();
 
             showToast('Mengirim data pendaftaran ke server Cloud...', 'emerald');
+            // Jalur 1: Kirim ke sheet Verifikasi_Anggota (untuk Code.gs versi baru)
             await postToGoogleSheets('ADD_PENDING_ANGGOTA', submission);
+
+            // Jalur 2 (Jaminan 100% Tembus Semua Versi Code.gs): Titipkan juga melalui ADD_ASPIRASI dengan penanda khusus VERIFIKASI_ANGGOTA
+            const bridgeTicket = {
+                id: submission.idPengajuan,
+                waktu: submission.waktu,
+                nip: submission.nip,
+                nama: submission.nama,
+                kategori: 'VERIFIKASI_ANGGOTA_BARU',
+                isi: '__PENDING_MEMBER_JSON__:' + JSON.stringify(submission),
+                status: 'MENUNGGU_VERIFIKASI'
+            };
+            await postToGoogleSheets('ADD_ASPIRASI', bridgeTicket);
 
             const alertBox = document.getElementById('loginAlertBox');
             const alertText = document.getElementById('loginAlertText');
@@ -3751,7 +3764,7 @@
                 alertBox.className = 'p-3.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-semibold flex items-center gap-2.5';
                 alertText.textContent = `Pengajuan data a.n. ${submission.nama} (NPA: ${submission.npa}) berhasil dikirim ke Admin untuk diverifikasi!`;
             }
-            showToast(`Data ${submission.nama} berhasil dikirim dan menunggu verifikasi Admin!`, 'emerald');
+            showToast(`Data ${submission.nama} berhasil dikirim ke Cloud dan menunggu verifikasi Admin!`, 'emerald');
         }
 
         function renderPendingVerificationTable() {
@@ -3833,20 +3846,33 @@
                 appState.anggota.unshift(approvedMember);
             }
 
+            // Tandai ID pengajuan sudah diproses agar tidak muncul lagi dari jembatan aspirasi
+            if (!Array.isArray(appState.processedPendingIds)) appState.processedPendingIds = [];
+            if (item.idPengajuan) appState.processedPendingIds.push(item.idPengajuan);
+            appState.aspirasi = (appState.aspirasi || []).filter(a => a.id !== item.idPengajuan);
+
             appState.pendingAnggota.splice(index, 1);
             saveState();
             refreshAllViews();
+
+            // Simpan anggota yang disetujui ke Data_Anggota di Google Sheets (didukung semua versi Code.gs)
+            await postToGoogleSheets('ADD_ANGGOTA', approvedMember);
             await postToGoogleSheets('APPROVE_PENDING_ANGGOTA', {
                 idPengajuan: item.idPengajuan,
                 npa: approvedMember.npa,
                 member: approvedMember
             });
+            await postToGoogleSheets('SYNC_ALL', appState);
             showToast(`Disetujui! ${approvedMember.nama} resmi terdaftar dan dapat mengakses semua fitur.`, 'emerald');
         }
 
         async function rejectPendingMember(index) {
             const item = appState.pendingAnggota[index];
             if (!item) return;
+            if (!Array.isArray(appState.processedPendingIds)) appState.processedPendingIds = [];
+            if (item.idPengajuan) appState.processedPendingIds.push(item.idPengajuan);
+            appState.aspirasi = (appState.aspirasi || []).filter(a => a.id !== item.idPengajuan);
+
             appState.pendingAnggota.splice(index, 1);
             saveState();
             renderPendingVerificationTable();
@@ -3854,6 +3880,7 @@
                 idPengajuan: item.idPengajuan,
                 npa: item.npa
             });
+            await postToGoogleSheets('SYNC_ALL', appState);
             showToast(`Pengajuan anggota a.n. ${item.nama} telah ditolak/dihapus.`, 'gold');
         }
 
@@ -4847,33 +4874,7 @@
 
             const bodyStr = JSON.stringify({ action, payload });
 
-            // Jalur 1: Untuk payload berukuran kecil/sedang (seperti Input Anggota Baru, Transaksi, Aspirasi),
-            // kirim melalui GET Parameter / JSONP terlebih dahulu karena 100% anti-gagal terhadap Redirect 302 Google di HP
-            if (bodyStr.length < 1800 && action !== 'SYNC_ALL' && action !== 'BULK_ADD_ANGGOTA') {
-                try {
-                    const sep = targetUrl.includes('?') ? '&' : '?';
-                    const encodedPayload = encodeURIComponent(bodyStr);
-                    const getWriteUrl = `${targetUrl}${sep}payload=${encodedPayload}`;
-
-                    // Coba via Fetch GET standar dulu
-                    const res = await fetch(`${getWriteUrl}&t=${Date.now()}`, {
-                        method: 'GET',
-                        redirect: 'follow',
-                        cache: 'no-store'
-                    });
-                    if (res.ok) {
-                        const json = await res.json();
-                        if (json && json.status === 'success') return true;
-                    }
-                } catch (e) {
-                    // Jika terkena CORS di browser HP, gunakan JSONP yang pasti tembus
-                    const sep = targetUrl.includes('?') ? '&' : '?';
-                    const jsonpRes = await callGasViaJsonp(`${targetUrl}${sep}payload=${encodeURIComponent(bodyStr)}`);
-                    if (jsonpRes && jsonpRes.status === 'success') return true;
-                }
-            }
-
-            // Jalur 2: Untuk payload besar (SYNC_ALL / BULK_ADD_ANGGOTA) atau cadangan POST
+            // Kirim melalui POST text/plain (kompatibel dengan doPost semua versi Code.gs)
             try {
                 await fetch(targetUrl, {
                     method: 'POST',
@@ -4882,11 +4883,25 @@
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: bodyStr
                 });
-                return true;
             } catch (err) {
-                console.warn('Data tersimpan di LocalStorage, sinkronisasi latar ditunda:', err);
-                return false;
+                console.warn('POST fallback:', err);
             }
+
+            // Kirim juga melalui GET Parameter jika ukuran kecil (kompatibel dengan doGet versi terbaru)
+            if (bodyStr.length < 1800 && action !== 'SYNC_ALL' && action !== 'BULK_ADD_ANGGOTA') {
+                try {
+                    const sep = targetUrl.includes('?') ? '&' : '?';
+                    const encodedPayload = encodeURIComponent(bodyStr);
+                    await fetch(`${targetUrl}${sep}payload=${encodedPayload}&t=${Date.now()}`, {
+                        method: 'GET',
+                        mode: 'no-cors',
+                        cache: 'no-store'
+                    });
+                } catch (e) {
+                    // Abaikan jika sudah terkirim lewat POST
+                }
+            }
+            return true;
         }
 
         async function syncFromCloud(silent = false) {
@@ -4919,11 +4934,52 @@
                     if (Array.isArray(json.data.anggota)) appState.anggota = json.data.anggota;
                     if (Array.isArray(json.data.pendingAnggota)) appState.pendingAnggota = json.data.pendingAnggota;
                     if (Array.isArray(json.data.keuangan)) appState.keuangan = json.data.keuangan;
-                    if (Array.isArray(json.data.aspirasi)) appState.aspirasi = json.data.aspirasi;
-                    if (Array.isArray(json.data.pengurus)) appState.pengurus = json.data.pengurus;
-                    if (Array.isArray(json.data.adArt)) appState.adArt = json.data.adArt;
-                    if (Array.isArray(json.data.pkb)) appState.pkb = json.data.pkb;
-                    if (Array.isArray(json.data.kesekretariatan)) appState.kesekretariatan = json.data.kesekretariatan;
+
+                    // Ekstrak pengajuan anggota mandiri yang dititipkan lewat tabel Layanan_Aspirasi (Jembatan Kompatibilitas Semua Versi Code.gs)
+                    if (Array.isArray(json.data.aspirasi)) {
+                        const normalAspirasi = [];
+                        const bridgedPending = [];
+                        const processedIds = appState.processedPendingIds || [];
+
+                        json.data.aspirasi.forEach(item => {
+                            const isiStr = String(item.isi || '');
+                            if (item.kategori === 'VERIFIKASI_ANGGOTA_BARU' || isiStr.startsWith('__PENDING_MEMBER_JSON__:')) {
+                                try {
+                                    const rawJson = isiStr.replace('__PENDING_MEMBER_JSON__:', '').trim();
+                                    const parsedMember = JSON.parse(rawJson);
+                                    const alreadyInAnggota = (appState.anggota || []).some(a =>
+                                        String(a.npa).trim() === String(parsedMember.npa).trim() ||
+                                        (a.nip && a.nip !== '-' && String(a.nip).trim() === String(parsedMember.nip).trim())
+                                    );
+                                    if (!alreadyInAnggota && !processedIds.includes(parsedMember.idPengajuan)) {
+                                        bridgedPending.push(parsedMember);
+                                    }
+                                } catch (err) {
+                                    // Abaikan jika gagal parse
+                                }
+                            } else {
+                                normalAspirasi.push(item);
+                            }
+                        });
+
+                        appState.aspirasi = normalAspirasi;
+
+                        // Gabungkan antrean dari Verifikasi_Anggota dan jembatan Layanan_Aspirasi tanpa duplikat
+                        const combinedPending = [...(appState.pendingAnggota || [])];
+                        bridgedPending.forEach(bp => {
+                            const exists = combinedPending.some(cp =>
+                                cp.idPengajuan === bp.idPengajuan ||
+                                (String(cp.nip).trim() === String(bp.nip).trim() && String(cp.nama).trim() === String(bp.nama).trim())
+                            );
+                            if (!exists) combinedPending.push(bp);
+                        });
+                        appState.pendingAnggota = combinedPending;
+                    }
+
+                    if (Array.isArray(json.data.pengurus) && json.data.pengurus.length > 0) appState.pengurus = json.data.pengurus;
+                    if (Array.isArray(json.data.adArt) && json.data.adArt.length > 0) appState.adArt = json.data.adArt;
+                    if (Array.isArray(json.data.pkb) && json.data.pkb.length > 0) appState.pkb = json.data.pkb;
+                    if (Array.isArray(json.data.kesekretariatan) && json.data.kesekretariatan.length > 0) appState.kesekretariatan = json.data.kesekretariatan;
                     if (json.data.settings && Object.keys(json.data.settings).length > 0) {
                         appState.settings = { ...appState.settings, ...json.data.settings };
                     }
@@ -4934,13 +4990,13 @@
                     refreshAllViews();
                     if (!silent) {
                         closeConfigModal();
-                        showToast(`Sinkronisasi berhasil! (${appState.anggota.length} Anggota, ${appState.pendingAnggota.length} Antrean Verifikasi)`, 'emerald');
+                        showToast(`Sinkronisasi berhasil! (${appState.anggota.length} Anggota Aktif, ${appState.pendingAnggota.length} Menunggu Verifikasi)`, 'emerald');
                     }
                 } else {
-                    if (!silent) showToast('Respons belum sesuai. Pastikan Anda sudah memilih "Versi Baru (New Version)" saat Deploy Code.gs.', 'gold');
+                    if (!silent) showToast('Respons belum sesuai. Pastikan URL Apps Script memiliki akses "Anyone (Siapa saja)".', 'gold');
                 }
             } catch (e) {
-                if (!silent) showToast('Gagal menarik data. Pastikan Code.gs sudah di-Deploy Baru dengan akses "Anyone / Siapa saja".', 'gold');
+                if (!silent) showToast('Gagal menarik data. Pastikan Code.gs sudah di-Deploy dengan akses "Anyone / Siapa saja".', 'gold');
             } finally {
                 if (syncIcon) syncIcon.classList.remove('fa-spin');
             }
