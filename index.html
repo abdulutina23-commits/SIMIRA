@@ -2484,7 +2484,7 @@
         // Data Awal Bersih Tanpa Data Dummy (Seluruh input pengguna disimpan ke localStorage & dapat diunduh permanen ke file index.html)
         /*__SIMIRA_EMBEDDED_DATA_START__*/
         const INITIAL_DATA = {
-            gasUrl: 'https://script.google.com/macros/s/AKfycbx-jJ5v_vpbFfA6JqYGTlQxAnx1EmBSympqlYuKtN4Y3H72lnZLQw-0HljrxYaz-i3p/exec',
+            gasUrl: 'https://script.google.com/macros/s/AKfycby1LGXsBUzzl5tLEdGHl8W0AUNhNNqjfiAKqLBEAM3CvCXPP_xWNQUlzLNYBO_pNmZA/exec',
             settings: {
                 theme: 'navy',
                 fontSize: 'md',
@@ -4810,17 +4810,77 @@
             }
         }
 
+        // Helper JSONP untuk menembus blokir CORS di semua browser HP/Laptop
+        function callGasViaJsonp(urlWithParams) {
+            return new Promise((resolve) => {
+                const cbName = 'simiraJsonpCb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+                const script = document.createElement('script');
+                const timer = setTimeout(() => {
+                    cleanup();
+                    resolve(null);
+                }, 12000);
+
+                function cleanup() {
+                    clearTimeout(timer);
+                    delete window[cbName];
+                    if (script.parentNode) script.parentNode.removeChild(script);
+                }
+
+                window[cbName] = (data) => {
+                    cleanup();
+                    resolve(data);
+                };
+
+                const sep = urlWithParams.includes('?') ? '&' : '?';
+                script.src = `${urlWithParams}${sep}callback=${cbName}&t=${Date.now()}`;
+                script.onerror = () => {
+                    cleanup();
+                    resolve(null);
+                };
+                document.body.appendChild(script);
+            });
+        }
+
         async function postToGoogleSheets(action, payload) {
             const targetUrl = (appState.gasUrl || INITIAL_DATA.gasUrl || '').trim();
             if (!targetUrl) return false;
+
+            const bodyStr = JSON.stringify({ action, payload });
+
+            // Jalur 1: Untuk payload berukuran kecil/sedang (seperti Input Anggota Baru, Transaksi, Aspirasi),
+            // kirim melalui GET Parameter / JSONP terlebih dahulu karena 100% anti-gagal terhadap Redirect 302 Google di HP
+            if (bodyStr.length < 1800 && action !== 'SYNC_ALL' && action !== 'BULK_ADD_ANGGOTA') {
+                try {
+                    const sep = targetUrl.includes('?') ? '&' : '?';
+                    const encodedPayload = encodeURIComponent(bodyStr);
+                    const getWriteUrl = `${targetUrl}${sep}payload=${encodedPayload}`;
+
+                    // Coba via Fetch GET standar dulu
+                    const res = await fetch(`${getWriteUrl}&t=${Date.now()}`, {
+                        method: 'GET',
+                        redirect: 'follow',
+                        cache: 'no-store'
+                    });
+                    if (res.ok) {
+                        const json = await res.json();
+                        if (json && json.status === 'success') return true;
+                    }
+                } catch (e) {
+                    // Jika terkena CORS di browser HP, gunakan JSONP yang pasti tembus
+                    const sep = targetUrl.includes('?') ? '&' : '?';
+                    const jsonpRes = await callGasViaJsonp(`${targetUrl}${sep}payload=${encodeURIComponent(bodyStr)}`);
+                    if (jsonpRes && jsonpRes.status === 'success') return true;
+                }
+            }
+
+            // Jalur 2: Untuk payload besar (SYNC_ALL / BULK_ADD_ANGGOTA) atau cadangan POST
             try {
-                // Gunakan text/plain;charset=utf-8 agar TIDAK terkena preflight CORS block oleh Google Apps Script
                 await fetch(targetUrl, {
                     method: 'POST',
                     mode: 'no-cors',
                     cache: 'no-cache',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action, payload })
+                    body: bodyStr
                 });
                 return true;
             } catch (err) {
@@ -4841,12 +4901,20 @@
             try {
                 if (!silent) showToast('Menarik data terbaru dari Google Sheets...', 'emerald');
                 const separator = url.includes('?') ? '&' : '?';
-                const res = await fetch(`${url}${separator}action=GET_ALL&t=${Date.now()}`, {
-                    method: 'GET',
-                    redirect: 'follow',
-                    cache: 'no-store'
-                });
-                const json = await res.json();
+                let json = null;
+
+                try {
+                    const res = await fetch(`${url}${separator}action=GET_ALL&t=${Date.now()}`, {
+                        method: 'GET',
+                        redirect: 'follow',
+                        cache: 'no-store'
+                    });
+                    json = await res.json();
+                } catch (fetchErr) {
+                    // Fallback otomatis menggunakan JSONP jika fetch diblokir CORS browser
+                    json = await callGasViaJsonp(`${url}${separator}action=GET_ALL`);
+                }
+
                 if (json && json.status === 'success' && json.data) {
                     if (Array.isArray(json.data.anggota)) appState.anggota = json.data.anggota;
                     if (Array.isArray(json.data.pendingAnggota)) appState.pendingAnggota = json.data.pendingAnggota;
@@ -4868,6 +4936,8 @@
                         closeConfigModal();
                         showToast(`Sinkronisasi berhasil! (${appState.anggota.length} Anggota, ${appState.pendingAnggota.length} Antrean Verifikasi)`, 'emerald');
                     }
+                } else {
+                    if (!silent) showToast('Respons belum sesuai. Pastikan Anda sudah memilih "Versi Baru (New Version)" saat Deploy Code.gs.', 'gold');
                 }
             } catch (e) {
                 if (!silent) showToast('Gagal menarik data. Pastikan Code.gs sudah di-Deploy Baru dengan akses "Anyone / Siapa saja".', 'gold');
