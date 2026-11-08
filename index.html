@@ -2480,6 +2480,85 @@
         let currentUserRole = 'ADMIN'; // 'ADMIN' atau 'MEMBER'
         let currentLoggedMember = null;
         let currentActiveKtaNpa = '';
+        let isCloudMutating = false; // Mencegah auto-sync menimpa data saat Admin sedang klik Setujui/Tolak/Hapus
+
+        // Helper Pembersih Data Ganda (Auto-Deduplicate) & Penomoran NPA Unik
+        function getMemberUniqueKey(m) {
+            const nipClean = String(m.nip || '').replace(/[^0-9a-zA-Z]/g, '').trim().toLowerCase();
+            const namaClean = String(m.nama || '').trim().toLowerCase().replace(/\s+/g, ' ');
+            if (nipClean && nipClean !== '-' && nipClean.length >= 6) {
+                return 'nip:' + nipClean;
+            }
+            return 'nama:' + namaClean;
+        }
+
+        function generateNextUniqueNpa() {
+            let maxSeq = 0;
+            (appState.anggota || []).forEach(a => {
+                const match = String(a.npa || '').match(/(\d{3,4})$/);
+                if (match) {
+                    const num = parseInt(match[1], 10);
+                    if (num > maxSeq && num < 9000) maxSeq = num;
+                }
+            });
+            return '750501' + String(maxSeq + 1).padStart(3, '0');
+        }
+
+        function deduplicateAndCleanState() {
+            if (!Array.isArray(appState.anggota)) appState.anggota = [];
+            if (!Array.isArray(appState.pendingAnggota)) appState.pendingAnggota = [];
+            if (!Array.isArray(appState.processedPendingIds)) appState.processedPendingIds = [];
+
+            // 1. Bersihkan duplikat pada daftar Anggota Aktif (berdasarkan NIP/NIK atau Nama Lengkap)
+            const seenMemberKeys = new Set();
+            const usedNpas = new Set();
+            const uniqueAnggota = [];
+
+            appState.anggota.forEach(m => {
+                if (!m || (!m.nama && !m.npa)) return;
+                // Perbaiki jika kolom jabatan tidak sengaja berisi kata 'Lunas' akibat pergeseran kolom sheet
+                if (m.jabatan === 'Lunas' || m.jabatan === 'Menunggak') {
+                    m.statusIuran = m.jabatan;
+                    m.jabatan = 'Anggota Aktif / Guru Madrasah';
+                }
+                const key = getMemberUniqueKey(m);
+                if (!seenMemberKeys.has(key)) {
+                    seenMemberKeys.add(key);
+                    uniqueAnggota.push(m);
+                }
+            });
+
+            // Pastikan tidak ada 2 anggota berbeda yang memakai NPA yang sama persis (contoh: dua orang bernomor 750501001)
+            // Urutkan dari yang paling awal didaftarkan (bawah ke atas) agar nomor urut konsisten
+            for (let i = uniqueAnggota.length - 1; i >= 0; i--) {
+                const item = uniqueAnggota[i];
+                const curNpa = String(item.npa || '').trim();
+                if (!curNpa || usedNpas.has(curNpa)) {
+                    let seq = 1;
+                    while (usedNpas.has('750501' + String(seq).padStart(3, '0'))) {
+                        seq++;
+                    }
+                    item.npa = '750501' + String(seq).padStart(3, '0');
+                }
+                usedNpas.add(String(item.npa).trim());
+            }
+            appState.anggota = uniqueAnggota;
+
+            // 2. Bersihkan Antrean Verifikasi: hapus duplikat & hapus siapa saja yang SUDAH ada di Anggota Aktif
+            const seenPendingKeys = new Set();
+            const cleanPending = [];
+            appState.pendingAnggota.forEach(p => {
+                if (!p || !p.nama) return;
+                const key = getMemberUniqueKey(p);
+                const isAlreadyApproved = seenMemberKeys.has(key);
+                const isProcessedId = p.idPengajuan && appState.processedPendingIds.includes(p.idPengajuan);
+                if (!isAlreadyApproved && !isProcessedId && !seenPendingKeys.has(key)) {
+                    seenPendingKeys.add(key);
+                    cleanPending.push(p);
+                }
+            });
+            appState.pendingAnggota = cleanPending;
+        }
 
         // Data Awal Bersih Tanpa Data Dummy (Seluruh input pengguna disimpan ke localStorage & dapat diunduh permanen ke file index.html)
         /*__SIMIRA_EMBEDDED_DATA_START__*/
@@ -2574,8 +2653,9 @@
             // WAJIB: Selalu sinkronkan gasUrl dengan INITIAL_DATA.gasUrl terbaru agar perangkat lama tidak terjebak memakai URL lama di localStorage
             if (INITIAL_DATA.gasUrl && appState.gasUrl !== INITIAL_DATA.gasUrl) {
                 appState.gasUrl = INITIAL_DATA.gasUrl;
-                saveState();
             }
+            deduplicateAndCleanState();
+            saveState();
 
             const gasInputEl = document.getElementById('gasUrlInput');
             if (appState.gasUrl) {
@@ -3743,20 +3823,8 @@
             closeModalSelfRegister();
 
             showToast('Mengirim data pendaftaran ke server Cloud...', 'emerald');
-            // Jalur 1: Kirim ke sheet Verifikasi_Anggota (untuk Code.gs versi baru)
+            // Kirim ke sheet Verifikasi_Anggota dan jembatan kompatibilitas
             await postToGoogleSheets('ADD_PENDING_ANGGOTA', submission);
-
-            // Jalur 2 (Jaminan 100% Tembus Semua Versi Code.gs): Titipkan juga melalui ADD_ASPIRASI dengan penanda khusus VERIFIKASI_ANGGOTA
-            const bridgeTicket = {
-                id: submission.idPengajuan,
-                waktu: submission.waktu,
-                nip: submission.nip,
-                nama: submission.nama,
-                kategori: 'VERIFIKASI_ANGGOTA_BARU',
-                isi: '__PENDING_MEMBER_JSON__:' + JSON.stringify(submission),
-                status: 'MENUNGGU_VERIFIKASI'
-            };
-            await postToGoogleSheets('ADD_ASPIRASI', bridgeTicket);
 
             const alertBox = document.getElementById('loginAlertBox');
             const alertText = document.getElementById('loginAlertText');
@@ -3824,64 +3892,101 @@
             const item = appState.pendingAnggota[index];
             if (!item) return;
 
-            const approvedMember = {
-                npa: item.npa,
-                nip: item.nip,
-                nama: item.nama,
-                satker: item.satker,
-                jenjang: item.jenjang,
-                statusPegawai: item.statusPegawai,
-                statusIuran: item.statusIuran || 'Lunas',
-                jabatan: item.jabatan || 'Anggota Aktif'
-            };
+            isCloudMutating = true;
+            try {
+                // Pastikan NPA unik (jika NPA dari perangkat anggota bentrok dengan anggota yang sudah ada, buat NPA urut baru)
+                let finalNpa = String(item.npa || '').trim();
+                const npaTakenByOther = (appState.anggota || []).some(a =>
+                    String(a.npa).trim() === finalNpa && getMemberUniqueKey(a) !== getMemberUniqueKey(item)
+                );
+                if (!finalNpa || npaTakenByOther) {
+                    finalNpa = generateNextUniqueNpa();
+                }
 
-            const existingIdx = appState.anggota.findIndex(a =>
-                String(a.npa).trim() === String(approvedMember.npa).trim() ||
-                String(a.nip).trim() === String(approvedMember.nip).trim()
-            );
+                const approvedMember = {
+                    npa: finalNpa,
+                    nip: item.nip,
+                    nama: item.nama,
+                    satker: item.satker,
+                    jenjang: item.jenjang,
+                    statusPegawai: item.statusPegawai,
+                    statusIuran: (item.statusIuran === 'Lunas' || item.statusIuran === 'Menunggak') ? item.statusIuran : 'Lunas',
+                    jabatan: (item.jabatan && item.jabatan !== 'Lunas') ? item.jabatan : 'Anggota Aktif / Guru Madrasah'
+                };
 
-            if (existingIdx !== -1) {
-                appState.anggota[existingIdx] = approvedMember;
-            } else {
-                appState.anggota.unshift(approvedMember);
+                const targetKey = getMemberUniqueKey(approvedMember);
+                const existingIdx = appState.anggota.findIndex(a => getMemberUniqueKey(a) === targetKey);
+
+                if (existingIdx !== -1) {
+                    appState.anggota[existingIdx] = approvedMember;
+                } else {
+                    appState.anggota.unshift(approvedMember);
+                }
+
+                // Tandai telah diproses & hapus semua entri kembar di antrean maupun jembatan aspirasi
+                if (!Array.isArray(appState.processedPendingIds)) appState.processedPendingIds = [];
+                if (item.idPengajuan) appState.processedPendingIds.push(item.idPengajuan);
+                appState.processedPendingIds.push(targetKey);
+
+                appState.pendingAnggota = (appState.pendingAnggota || []).filter((p, idx) =>
+                    idx !== index && getMemberUniqueKey(p) !== targetKey && p.idPengajuan !== item.idPengajuan
+                );
+                appState.aspirasi = (appState.aspirasi || []).filter(a =>
+                    a.id !== item.idPengajuan &&
+                    !(a.kategori === 'VERIFIKASI_ANGGOTA_BARU' && String(a.nama).trim().toLowerCase() === String(item.nama).trim().toLowerCase())
+                );
+
+                deduplicateAndCleanState();
+                saveState();
+                refreshAllViews();
+
+                // Kirim SATU perintah sinkronisasi bersih ke Google Sheets agar tidak pernah terjadi duplikasi baris
+                await postToGoogleSheets('APPROVE_PENDING_ANGGOTA', {
+                    idPengajuan: item.idPengajuan,
+                    npa: approvedMember.npa,
+                    nip: approvedMember.nip,
+                    nama: approvedMember.nama,
+                    member: approvedMember
+                });
+                await postToGoogleSheets('SYNC_ALL', appState);
+                showToast(`Disetujui! ${approvedMember.nama} (NPA: ${approvedMember.npa}) resmi terdaftar.`, 'emerald');
+            } finally {
+                setTimeout(() => { isCloudMutating = false; }, 4000);
             }
-
-            // Tandai ID pengajuan sudah diproses agar tidak muncul lagi dari jembatan aspirasi
-            if (!Array.isArray(appState.processedPendingIds)) appState.processedPendingIds = [];
-            if (item.idPengajuan) appState.processedPendingIds.push(item.idPengajuan);
-            appState.aspirasi = (appState.aspirasi || []).filter(a => a.id !== item.idPengajuan);
-
-            appState.pendingAnggota.splice(index, 1);
-            saveState();
-            refreshAllViews();
-
-            // Simpan anggota yang disetujui ke Data_Anggota di Google Sheets (didukung semua versi Code.gs)
-            await postToGoogleSheets('ADD_ANGGOTA', approvedMember);
-            await postToGoogleSheets('APPROVE_PENDING_ANGGOTA', {
-                idPengajuan: item.idPengajuan,
-                npa: approvedMember.npa,
-                member: approvedMember
-            });
-            await postToGoogleSheets('SYNC_ALL', appState);
-            showToast(`Disetujui! ${approvedMember.nama} resmi terdaftar dan dapat mengakses semua fitur.`, 'emerald');
         }
 
         async function rejectPendingMember(index) {
             const item = appState.pendingAnggota[index];
             if (!item) return;
-            if (!Array.isArray(appState.processedPendingIds)) appState.processedPendingIds = [];
-            if (item.idPengajuan) appState.processedPendingIds.push(item.idPengajuan);
-            appState.aspirasi = (appState.aspirasi || []).filter(a => a.id !== item.idPengajuan);
 
-            appState.pendingAnggota.splice(index, 1);
-            saveState();
-            renderPendingVerificationTable();
-            await postToGoogleSheets('REJECT_PENDING_ANGGOTA', {
-                idPengajuan: item.idPengajuan,
-                npa: item.npa
-            });
-            await postToGoogleSheets('SYNC_ALL', appState);
-            showToast(`Pengajuan anggota a.n. ${item.nama} telah ditolak/dihapus.`, 'gold');
+            isCloudMutating = true;
+            try {
+                const targetKey = getMemberUniqueKey(item);
+                if (!Array.isArray(appState.processedPendingIds)) appState.processedPendingIds = [];
+                if (item.idPengajuan) appState.processedPendingIds.push(item.idPengajuan);
+                appState.processedPendingIds.push(targetKey);
+
+                appState.pendingAnggota = (appState.pendingAnggota || []).filter((p, idx) =>
+                    idx !== index && getMemberUniqueKey(p) !== targetKey && p.idPengajuan !== item.idPengajuan
+                );
+                appState.aspirasi = (appState.aspirasi || []).filter(a =>
+                    a.id !== item.idPengajuan &&
+                    !(a.kategori === 'VERIFIKASI_ANGGOTA_BARU' && String(a.nama).trim().toLowerCase() === String(item.nama).trim().toLowerCase())
+                );
+
+                saveState();
+                renderPendingVerificationTable();
+                await postToGoogleSheets('REJECT_PENDING_ANGGOTA', {
+                    idPengajuan: item.idPengajuan,
+                    npa: item.npa,
+                    nip: item.nip,
+                    nama: item.nama
+                });
+                await postToGoogleSheets('SYNC_ALL', appState);
+                showToast(`Pengajuan anggota a.n. ${item.nama} telah ditolak/dihapus.`, 'gold');
+            } finally {
+                setTimeout(() => { isCloudMutating = false; }, 4000);
+            }
         }
 
         // ==================== LOGIKA MODUL KESEKRETARIATAN (SURAT GOOGLE DRIVE) ====================
@@ -4874,20 +4979,7 @@
 
             const bodyStr = JSON.stringify({ action, payload });
 
-            // Kirim melalui POST text/plain (kompatibel dengan doPost semua versi Code.gs)
-            try {
-                await fetch(targetUrl, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    cache: 'no-cache',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: bodyStr
-                });
-            } catch (err) {
-                console.warn('POST fallback:', err);
-            }
-
-            // Kirim juga melalui GET Parameter jika ukuran kecil (kompatibel dengan doGet versi terbaru)
+            // Gunakan SATU jalur pengiriman saja per panggilan agar tidak pernah menggandakan baris di Google Sheets
             if (bodyStr.length < 1800 && action !== 'SYNC_ALL' && action !== 'BULK_ADD_ANGGOTA') {
                 try {
                     const sep = targetUrl.includes('?') ? '&' : '?';
@@ -4897,14 +4989,31 @@
                         mode: 'no-cors',
                         cache: 'no-store'
                     });
+                    return true;
                 } catch (e) {
-                    // Abaikan jika sudah terkirim lewat POST
+                    // Jika GET gagal, baru lanjutkan ke fallback POST di bawah
                 }
             }
-            return true;
+
+            try {
+                await fetch(targetUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    cache: 'no-cache',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: bodyStr
+                });
+                return true;
+            } catch (err) {
+                console.warn('POST fallback:', err);
+                return false;
+            }
         }
 
         async function syncFromCloud(silent = false) {
+            // Jangan menimpa state lokal jika Admin baru saja menekan tombol Setujui/Tolak/Hapus dalam 4 detik terakhir
+            if (silent && isCloudMutating) return;
+
             const inputEl = document.getElementById('gasUrlInput');
             const url = ((inputEl && inputEl.value) ? inputEl.value : (appState.gasUrl || INITIAL_DATA.gasUrl || '')).trim();
             if (!url) {
@@ -4984,6 +5093,8 @@
                         appState.settings = { ...appState.settings, ...json.data.settings };
                     }
                     appState.gasUrl = url;
+                    // Bersihkan otomatis segala bentuk duplikat dan pastikan anggota yang sudah disetujui tidak muncul lagi di antrean
+                    deduplicateAndCleanState();
                     saveState();
                     applyAllUserSettings();
                     populateSettingsForm();
